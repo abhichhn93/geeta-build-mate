@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { useProducts, useCategories, useBrands, useDeleteProduct, Product } from '@/hooks/useProducts';
+import { useProductStocks, getAggregatedStock } from '@/hooks/useProductStocks';
 import { useAuth } from '@/hooks/useAuth';
 import { useLanguage } from '@/hooks/useLanguage';
 import { useCart } from '@/hooks/useCart';
@@ -11,6 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { ProductFilters, ProductFiltersState } from './ProductFilters';
 import { ProductEditModal } from './ProductEditModal';
+import { BranchSelector } from './BranchSelector';
 import { LanguageToggle } from '@/components/layout/LanguageToggle';
 import { ThemeSwitcher } from '@/components/layout/ThemeSwitcher';
 import {
@@ -27,7 +29,6 @@ import { toast } from 'sonner';
 import {
   Plus, 
   Minus, 
-  ShoppingCart, 
   Pencil, 
   Trash2,
   Search, 
@@ -81,6 +82,7 @@ export function ProductsPage({ onAddToCart }: ProductsPageProps) {
   const [editingProduct, setEditingProduct] = useState<ProductWithRelations | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
   const [deletingProduct, setDeletingProduct] = useState<ProductWithRelations | null>(null);
+  const [selectedBranch, setSelectedBranch] = useState<string>('all');
 
   const { isAdmin } = useAuth();
   const { language, t } = useLanguage();
@@ -88,6 +90,7 @@ export function ProductsPage({ onAddToCart }: ProductsPageProps) {
   const { data: products, isLoading } = useProducts();
   const { data: categories } = useCategories();
   const { data: brands } = useBrands();
+  const { data: productStocks } = useProductStocks(selectedBranch);
   const deleteProduct = useDeleteProduct();
 
   const maxPrice = useMemo(() => {
@@ -95,10 +98,24 @@ export function ProductsPage({ onAddToCart }: ProductsPageProps) {
     return Math.ceil(Math.max(...products.map((p) => p.price)) / 100) * 100;
   }, [products]);
 
-  const filteredProducts = useMemo(() => {
-    if (!products) return [];
+  // Compute stock for each product based on selected branch
+  const productsWithStock = useMemo(() => {
+    if (!products || !productStocks) return [];
 
-    return products.filter((product) => {
+    return products.map((product) => {
+      const stockInfo = getAggregatedStock(product.id, productStocks, selectedBranch);
+      return {
+        ...product,
+        computed_stock_qty: stockInfo.stock_qty,
+        computed_stock_status: stockInfo.stock_status,
+      };
+    });
+  }, [products, productStocks, selectedBranch]);
+
+  const filteredProducts = useMemo(() => {
+    if (!productsWithStock) return [];
+
+    return productsWithStock.filter((product) => {
       if (searchQuery) {
         const query = searchQuery.toLowerCase();
         const matchesSearch =
@@ -122,9 +139,9 @@ export function ProductsPage({ onAddToCart }: ProductsPageProps) {
         if (!product.size || !filters.sizes.includes(product.size)) return false;
       }
 
-      // Stock status filter
+      // Stock status filter - use computed status
       if (filters.stockStatus.length > 0) {
-        if (!product.stock_status || !filters.stockStatus.includes(product.stock_status)) return false;
+        if (!filters.stockStatus.includes(product.computed_stock_status)) return false;
       }
 
       if (product.price < filters.priceRange[0] || product.price > filters.priceRange[1]) {
@@ -133,7 +150,7 @@ export function ProductsPage({ onAddToCart }: ProductsPageProps) {
 
       return true;
     });
-  }, [products, searchQuery, selectedCategory, filters]) as ProductWithRelations[];
+  }, [productsWithStock, searchQuery, selectedCategory, filters]) as (ProductWithRelations & { computed_stock_qty: number; computed_stock_status: string })[];
 
   const handleCategoryChange = (categoryId: string) => {
     if (categoryId === 'all') {
@@ -149,7 +166,7 @@ export function ProductsPage({ onAddToCart }: ProductsPageProps) {
       productId: product.id,
       name: product.name_en,
       nameHi: product.name_hi,
-      brand: product.brand?.name || 'Generic',
+      brand: product.brand?.name || undefined,
       size: product.size,
       price: product.price,
       unit: product.unit,
@@ -181,7 +198,7 @@ export function ProductsPage({ onAddToCart }: ProductsPageProps) {
     }
   };
 
-  const getStockBadge = (status: string | null) => {
+  const getStockBadge = (status: string) => {
     switch (status) {
       case 'in_stock':
         return <Badge className="bg-success/20 text-success border-0 text-[9px] px-1.5 py-0">{t('In Stock', 'स्टॉक में')}</Badge>;
@@ -192,6 +209,18 @@ export function ProductsPage({ onAddToCart }: ProductsPageProps) {
       default:
         return null;
     }
+  };
+
+  // Format brand + size display (handles no brand case)
+  const formatBrandSize = (product: ProductWithRelations) => {
+    const parts: string[] = [];
+    if (product.brand?.name) {
+      parts.push(product.brand.name);
+    }
+    if (product.size) {
+      parts.push(product.size);
+    }
+    return parts.join(' • ') || '—';
   };
 
   return (
@@ -228,8 +257,18 @@ export function ProductsPage({ onAddToCart }: ProductsPageProps) {
         </div>
       </header>
 
+      {/* Branch Selector */}
+      <div className="sticky top-[85px] z-35 border-b bg-card/95 backdrop-blur-sm px-4 py-2">
+        <div className="mx-auto max-w-lg">
+          <BranchSelector
+            selectedBranch={selectedBranch}
+            onBranchChange={setSelectedBranch}
+          />
+        </div>
+      </div>
+
       {/* Category Filter + Filters Button */}
-      <div className="sticky top-[85px] z-30 border-b bg-card shadow-sm">
+      <div className="sticky top-[125px] z-30 border-b bg-card shadow-sm">
         <div className="mx-auto max-w-lg overflow-x-auto px-4 py-2 scrollbar-hide">
           <div className="flex items-center gap-1.5">
             {categories && brands && (
@@ -338,14 +377,14 @@ export function ProductsPage({ onAddToCart }: ProductsPageProps) {
 
                   {/* Stock Badge */}
                   <div className="absolute bottom-1 left-1">
-                    {getStockBadge(product.stock_status)}
+                    {getStockBadge(product.computed_stock_status)}
                   </div>
                 </div>
 
                 <CardContent className="p-2">
-                  {/* Brand + Size */}
+                  {/* Brand + Size - handles no brand gracefully */}
                   <p className="text-[9px] text-muted-foreground truncate">
-                    {product.brand?.name || 'Generic'}{product.size && ` • ${product.size}`}
+                    {formatBrandSize(product)}
                   </p>
                   
                   {/* Product Name */}
@@ -390,7 +429,7 @@ export function ProductsPage({ onAddToCart }: ProductsPageProps) {
                         <Button
                           size="sm"
                           className="h-6 text-[10px] px-2"
-                          disabled={product.stock_status === 'out_of_stock'}
+                          disabled={product.computed_stock_status === 'out_of_stock'}
                           onClick={() => handleAddToCart(product)}
                         >
                           <Plus className="h-2.5 w-2.5 mr-0.5" />
@@ -423,6 +462,7 @@ export function ProductsPage({ onAddToCart }: ProductsPageProps) {
           setShowAddModal(false);
         }}
         product={editingProduct}
+        selectedBranchId={selectedBranch}
       />
 
       {/* Delete Confirmation Dialog */}

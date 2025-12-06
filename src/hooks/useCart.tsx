@@ -4,12 +4,12 @@ export interface CartItem {
   productId: string;
   name: string;
   nameHi: string;
-  brand: string;
-  size: string | null;
+  brand?: string | null;
+  size?: string | null;
   price: number;
   unit: string;
   quantity: number;
-  imageUrl: string | null;
+  imageUrl?: string | null;
 }
 
 interface CartContextType {
