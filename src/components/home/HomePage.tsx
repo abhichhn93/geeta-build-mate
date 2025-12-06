@@ -69,7 +69,7 @@ export function HomePage() {
             </p>
           </div>
           <div className="flex items-center gap-2">
-            {isAdmin && <ThemeSwitcher />}
+            <ThemeSwitcher />
             <LanguageToggle />
           </div>
         </div>
@@ -120,12 +120,14 @@ export function HomePage() {
                       {t('TMT', 'सरिया')}
                     </Badge>
                     <div className="grid grid-cols-2 gap-1.5">
-                      {sariyaRates.slice(0, 6).map((rate) => (
+                    {sariyaRates.slice(0, 6).map((rate) => (
                         <div
                           key={rate.id}
-                          className="flex items-center justify-between rounded-md border bg-card px-2 py-1.5 text-sm"
+                          className="flex items-center justify-between rounded-md border bg-card px-2 py-1.5"
                         >
-                          <span className="text-xs">{rate.size || rate.brand}</span>
+                          <span className="text-[10px] text-muted-foreground truncate max-w-[60%]">
+                            {rate.brand} {rate.size && `• ${rate.size}`}
+                          </span>
                           <span className="font-semibold text-primary text-xs">
                             {formatINR(rate.price)}
                           </span>
