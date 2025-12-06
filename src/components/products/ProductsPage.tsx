@@ -1,8 +1,9 @@
 import { useState, useMemo } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
-import { useProducts, useCategories, useBrands, Product } from '@/hooks/useProducts';
+import { useProducts, useCategories, useBrands, useDeleteProduct, Product } from '@/hooks/useProducts';
 import { useAuth } from '@/hooks/useAuth';
 import { useLanguage } from '@/hooks/useLanguage';
+import { useCart } from '@/hooks/useCart';
 import { formatINR } from '@/lib/whatsapp';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -13,10 +14,22 @@ import { ProductEditModal } from './ProductEditModal';
 import { LanguageToggle } from '@/components/layout/LanguageToggle';
 import { ThemeSwitcher } from '@/components/layout/ThemeSwitcher';
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { toast } from 'sonner';
+import {
   Plus, 
   Minus, 
   ShoppingCart, 
   Pencil, 
+  Trash2,
   Search, 
   ArrowLeft,
   CircleDot,
@@ -64,16 +77,18 @@ export function ProductsPage({ onAddToCart }: ProductsPageProps) {
   const [searchParams, setSearchParams] = useSearchParams();
   const selectedCategory = searchParams.get('category') || 'all';
   const [searchQuery, setSearchQuery] = useState('');
-  const [quantities, setQuantities] = useState<Record<string, number>>({});
   const [filters, setFilters] = useState<ProductFiltersState>(defaultFilters);
   const [editingProduct, setEditingProduct] = useState<ProductWithRelations | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [deletingProduct, setDeletingProduct] = useState<ProductWithRelations | null>(null);
 
   const { isAdmin } = useAuth();
   const { language, t } = useLanguage();
+  const { addItem, getItemQuantity, updateQuantity } = useCart();
   const { data: products, isLoading } = useProducts();
   const { data: categories } = useCategories();
   const { data: brands } = useBrands();
+  const deleteProduct = useDeleteProduct();
 
   const maxPrice = useMemo(() => {
     if (!products || products.length === 0) return 10000;
@@ -129,14 +144,42 @@ export function ProductsPage({ onAddToCart }: ProductsPageProps) {
     setSearchParams(searchParams);
   };
 
-  const handleQuantityChange = (productId: string, delta: number) => {
-    setQuantities((prev) => ({
-      ...prev,
-      [productId]: Math.max(0, (prev[productId] || 0) + delta),
-    }));
+  const handleAddToCart = (product: ProductWithRelations) => {
+    addItem({
+      productId: product.id,
+      name: product.name_en,
+      nameHi: product.name_hi,
+      brand: product.brand?.name || 'Generic',
+      size: product.size,
+      price: product.price,
+      unit: product.unit,
+      imageUrl: product.image_url,
+    });
+    toast.success(t('Added to cart', 'कार्ट में जोड़ा गया'));
   };
 
-  const getQuantity = (productId: string) => quantities[productId] || 0;
+  const handleQuantityChange = (product: ProductWithRelations, delta: number) => {
+    const currentQty = getItemQuantity(product.id);
+    const newQty = currentQty + delta;
+    if (newQty <= 0) {
+      updateQuantity(product.id, 0);
+    } else if (currentQty === 0 && delta > 0) {
+      handleAddToCart(product);
+    } else {
+      updateQuantity(product.id, newQty);
+    }
+  };
+
+  const handleDeleteProduct = async () => {
+    if (!deletingProduct) return;
+    try {
+      await deleteProduct.mutateAsync(deletingProduct.id);
+      toast.success(t('Product deleted', 'प्रोडक्ट हटा दिया'));
+      setDeletingProduct(null);
+    } catch (error) {
+      toast.error(t('Failed to delete', 'हटाने में समस्या'));
+    }
+  };
 
   const getStockBadge = (status: string | null) => {
     switch (status) {
@@ -271,16 +314,26 @@ export function ProductsPage({ onAddToCart }: ProductsPageProps) {
                     </div>
                   )}
 
-                  {/* Admin Edit Button */}
+                  {/* Admin Controls */}
                   {isAdmin && (
-                    <Button
-                      size="icon"
-                      variant="secondary"
-                      className="absolute right-1 top-1 h-6 w-6 rounded-full shadow"
-                      onClick={() => setEditingProduct(product)}
-                    >
-                      <Pencil className="h-3 w-3" />
-                    </Button>
+                    <div className="absolute right-1 top-1 flex gap-1">
+                      <Button
+                        size="icon"
+                        variant="secondary"
+                        className="h-6 w-6 rounded-full shadow"
+                        onClick={() => setEditingProduct(product)}
+                      >
+                        <Pencil className="h-3 w-3" />
+                      </Button>
+                      <Button
+                        size="icon"
+                        variant="secondary"
+                        className="h-6 w-6 rounded-full shadow text-destructive hover:text-destructive"
+                        onClick={() => setDeletingProduct(product)}
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    </div>
                   )}
 
                   {/* Stock Badge */}
@@ -313,22 +366,22 @@ export function ProductsPage({ onAddToCart }: ProductsPageProps) {
                     
                     {/* Compact Add Button */}
                     <div>
-                      {getQuantity(product.id) > 0 ? (
+                      {getItemQuantity(product.id) > 0 ? (
                         <div className="flex items-center rounded border h-6">
                           <Button
                             size="icon"
                             variant="ghost"
                             className="h-6 w-6 rounded-l"
-                            onClick={() => handleQuantityChange(product.id, -1)}
+                            onClick={() => handleQuantityChange(product, -1)}
                           >
                             <Minus className="h-2.5 w-2.5" />
                           </Button>
-                          <span className="text-[10px] font-medium w-4 text-center">{getQuantity(product.id)}</span>
+                          <span className="text-[10px] font-medium w-4 text-center">{getItemQuantity(product.id)}</span>
                           <Button
                             size="icon"
                             variant="ghost"
                             className="h-6 w-6 rounded-r"
-                            onClick={() => handleQuantityChange(product.id, 1)}
+                            onClick={() => handleQuantityChange(product, 1)}
                           >
                             <Plus className="h-2.5 w-2.5" />
                           </Button>
@@ -338,7 +391,7 @@ export function ProductsPage({ onAddToCart }: ProductsPageProps) {
                           size="sm"
                           className="h-6 text-[10px] px-2"
                           disabled={product.stock_status === 'out_of_stock'}
-                          onClick={() => handleQuantityChange(product.id, 1)}
+                          onClick={() => handleAddToCart(product)}
                         >
                           <Plus className="h-2.5 w-2.5 mr-0.5" />
                           {t('Add', 'जोड़ें')}
@@ -371,6 +424,24 @@ export function ProductsPage({ onAddToCart }: ProductsPageProps) {
         }}
         product={editingProduct}
       />
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={!!deletingProduct} onOpenChange={(open) => !open && setDeletingProduct(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t('Delete Product?', 'प्रोडक्ट हटाएं?')}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t('This will remove', 'यह हटा देगा')} "{deletingProduct?.name_en}" {t('from the catalog.', 'कैटलॉग से।')}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t('Cancel', 'रद्द करें')}</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteProduct} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              {t('Delete', 'हटाएं')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

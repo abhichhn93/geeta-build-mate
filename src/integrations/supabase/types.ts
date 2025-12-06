@@ -14,6 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      branches: {
+        Row: {
+          address: string | null
+          created_at: string
+          id: string
+          is_active: boolean | null
+          name: string
+          phone: string | null
+        }
+        Insert: {
+          address?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          name: string
+          phone?: string | null
+        }
+        Update: {
+          address?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          phone?: string | null
+        }
+        Relationships: []
+      }
       brands: {
         Row: {
           category_id: string | null
@@ -257,6 +284,7 @@ export type Database = {
       }
       products: {
         Row: {
+          branch_id: string | null
           brand_id: string | null
           category_id: string | null
           created_at: string
@@ -276,6 +304,7 @@ export type Database = {
           weight_per_piece: number | null
         }
         Insert: {
+          branch_id?: string | null
           brand_id?: string | null
           category_id?: string | null
           created_at?: string
@@ -295,6 +324,7 @@ export type Database = {
           weight_per_piece?: number | null
         }
         Update: {
+          branch_id?: string | null
           brand_id?: string | null
           category_id?: string | null
           created_at?: string
@@ -314,6 +344,13 @@ export type Database = {
           weight_per_piece?: number | null
         }
         Relationships: [
+          {
+            foreignKeyName: "products_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "products_brand_id_fkey"
             columns: ["brand_id"]

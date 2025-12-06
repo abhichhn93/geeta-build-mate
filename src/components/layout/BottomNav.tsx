@@ -2,6 +2,7 @@ import { NavLink, useLocation } from 'react-router-dom';
 import { Home, Package, ShoppingCart, ClipboardList, User, Settings } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useLanguage } from '@/hooks/useLanguage';
+import { useCart } from '@/hooks/useCart';
 import { cn } from '@/lib/utils';
 
 const customerNavItems = [
@@ -23,6 +24,7 @@ const adminNavItems = [
 export function BottomNav() {
   const { isAdmin } = useAuth();
   const { language } = useLanguage();
+  const { totalItems } = useCart();
   const location = useLocation();
   const navItems = isAdmin ? adminNavItems : customerNavItems;
 
@@ -31,19 +33,29 @@ export function BottomNav() {
       <div className="mx-auto flex max-w-lg items-center justify-around">
         {navItems.map((item) => {
           const isActive = location.pathname === item.to;
+          const isCart = item.to === '/cart';
+          const showBadge = isCart && totalItems > 0;
+
           return (
             <NavLink
               key={item.to}
               to={item.to}
               className={cn(
-                'flex flex-1 flex-col items-center gap-0.5 py-2 transition-colors',
+                'relative flex flex-1 flex-col items-center gap-0.5 py-2 transition-colors',
                 isActive ? 'text-primary' : 'text-muted-foreground hover:text-foreground'
               )}
             >
-              <item.icon
-                className={cn('h-5 w-5', isActive && 'fill-primary/20')}
-                strokeWidth={isActive ? 2.5 : 2}
-              />
+              <div className="relative">
+                <item.icon
+                  className={cn('h-5 w-5', isActive && 'fill-primary/20')}
+                  strokeWidth={isActive ? 2.5 : 2}
+                />
+                {showBadge && (
+                  <span className="absolute -right-2 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-bold text-destructive-foreground">
+                    {totalItems > 99 ? '99+' : totalItems}
+                  </span>
+                )}
+              </div>
               <span className="text-[10px] font-medium">
                 {language === 'en' ? item.label : item.labelHi}
               </span>
