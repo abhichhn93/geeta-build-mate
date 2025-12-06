@@ -5,9 +5,36 @@ import { formatINR } from '@/lib/whatsapp';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Share2, TrendingUp, Package, Calculator } from 'lucide-react';
+import { 
+  Share2, 
+  TrendingUp, 
+  Package, 
+  Calculator,
+  CircleDot,
+  Box,
+  Link as LinkIcon,
+  Triangle,
+  Square,
+  Circle,
+  Wrench,
+  MapPin
+} from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { generateRatesWhatsAppLink, openWhatsApp } from '@/lib/whatsapp';
+
+// Map category names to Lucide icons
+const getCategoryIcon = (nameEn: string) => {
+  const iconMap: Record<string, React.ReactNode> = {
+    'TMT Sariya': <CircleDot className="h-6 w-6" />,
+    'Cement': <Box className="h-6 w-6" />,
+    'Binding Wire': <LinkIcon className="h-6 w-6" />,
+    'MS Angles': <Triangle className="h-6 w-6" />,
+    'MS Channels': <Square className="h-6 w-6" />,
+    'Stirrups': <Circle className="h-6 w-6" />,
+    'Fasteners': <Wrench className="h-6 w-6" />,
+  };
+  return iconMap[nameEn] || <Package className="h-6 w-6" />;
+};
 
 export function HomePage() {
   const { user, isAdmin } = useAuth();
@@ -26,22 +53,23 @@ export function HomePage() {
   };
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="sticky top-0 z-40 border-b border-border bg-primary px-4 py-4 text-primary-foreground">
+      <header className="sticky top-0 z-40 border-b bg-card px-4 py-4 shadow-sm">
         <div className="mx-auto max-w-lg">
-          <h1 className="text-xl font-bold">गीता ट्रेडर्स</h1>
-          <p className="text-sm opacity-90">Geeta Traders</p>
-          <p className="mt-1 text-xs opacity-75">
-            📍 Mohammadabad Gohna, Mau, UP
+          <h1 className="text-xl font-bold text-foreground">गीता ट्रेडर्स</h1>
+          <p className="text-sm text-muted-foreground">Geeta Traders</p>
+          <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
+            <MapPin className="h-3 w-3" />
+            Mohammadabad Gohna, Mau, UP
           </p>
         </div>
       </header>
 
       <div className="mx-auto max-w-lg space-y-4 p-4">
         {/* Today's Rate Section */}
-        <Card className="overflow-hidden border-2 border-primary/20">
-          <CardHeader className="bg-gradient-to-r from-primary/10 to-accent/10 pb-3">
+        <Card className="overflow-hidden shadow-sm">
+          <CardHeader className="border-b bg-muted/30 pb-3">
             <div className="flex items-center justify-between">
               <div>
                 <CardTitle className="flex items-center gap-2 text-lg">
@@ -81,7 +109,7 @@ export function HomePage() {
                 {sariyaRates.length > 0 && (
                   <div>
                     <h3 className="mb-2 flex items-center gap-2 font-semibold">
-                      <Badge variant="secondary" className="bg-steel/20 text-steel">
+                      <Badge variant="secondary">
                         सरिया / TMT
                       </Badge>
                     </h3>
@@ -89,7 +117,7 @@ export function HomePage() {
                       {sariyaRates.slice(0, 6).map((rate) => (
                         <div
                           key={rate.id}
-                          className="flex items-center justify-between rounded-lg bg-secondary/50 px-3 py-2"
+                          className="flex items-center justify-between rounded-lg border bg-card px-3 py-2"
                         >
                           <div>
                             <span className="font-medium">{rate.size || rate.brand}</span>
@@ -110,7 +138,7 @@ export function HomePage() {
                 {cementRates.length > 0 && (
                   <div>
                     <h3 className="mb-2 flex items-center gap-2 font-semibold">
-                      <Badge variant="secondary" className="bg-cement/30 text-foreground">
+                      <Badge variant="secondary">
                         सीमेंट / Cement
                       </Badge>
                     </h3>
@@ -118,7 +146,7 @@ export function HomePage() {
                       {cementRates.slice(0, 4).map((rate) => (
                         <div
                           key={rate.id}
-                          className="flex items-center justify-between rounded-lg bg-secondary/50 px-3 py-2"
+                          className="flex items-center justify-between rounded-lg border bg-card px-3 py-2"
                         >
                           <span className="font-medium">{rate.brand}</span>
                           <span className="font-bold text-primary">
@@ -142,9 +170,9 @@ export function HomePage() {
         {/* Quick Actions */}
         <div className="grid grid-cols-2 gap-3">
           <Link to="/products">
-            <Card className="cursor-pointer transition-all hover:border-primary hover:shadow-md">
+            <Card className="cursor-pointer shadow-sm transition-all hover:shadow-md">
               <CardContent className="flex flex-col items-center gap-2 p-4">
-                <div className="rounded-full bg-primary/10 p-3">
+                <div className="rounded-xl bg-primary/10 p-3">
                   <Package className="h-6 w-6 text-primary" />
                 </div>
                 <div className="text-center">
@@ -158,10 +186,10 @@ export function HomePage() {
           </Link>
 
           <Link to="/calculator">
-            <Card className="cursor-pointer transition-all hover:border-primary hover:shadow-md">
+            <Card className="cursor-pointer shadow-sm transition-all hover:shadow-md">
               <CardContent className="flex flex-col items-center gap-2 p-4">
-                <div className="rounded-full bg-accent/20 p-3">
-                  <Calculator className="h-6 w-6 text-accent-foreground" />
+                <div className="rounded-xl bg-primary/10 p-3">
+                  <Calculator className="h-6 w-6 text-primary" />
                 </div>
                 <div className="text-center">
                   <p className="font-medium">TMT Calculator</p>
@@ -176,25 +204,29 @@ export function HomePage() {
 
         {/* Categories Grid */}
         {categories && categories.length > 0 && (
-          <Card>
+          <Card className="shadow-sm">
             <CardHeader className="pb-2">
               <CardTitle className="text-base">Categories / श्रेणियाँ</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-4 gap-2">
+              <div className="grid grid-cols-4 gap-3">
                 {categories.map((category) => (
                   <Link
                     key={category.id}
                     to={`/products?category=${category.id}`}
-                    className="flex flex-col items-center gap-1 rounded-lg bg-secondary/50 p-2 text-center transition-colors hover:bg-secondary"
+                    className="flex flex-col items-center gap-2 rounded-xl border bg-card p-3 text-center transition-all hover:border-primary hover:shadow-sm"
                   >
-                    <span className="text-2xl">{category.icon || '📦'}</span>
-                    <span className="text-[10px] font-medium leading-tight">
-                      {category.name_en}
-                    </span>
-                    <span className="text-[8px] text-muted-foreground hindi-text">
-                      {category.name_hi}
-                    </span>
+                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-muted text-muted-foreground">
+                      {getCategoryIcon(category.name_en)}
+                    </div>
+                    <div>
+                      <span className="block text-[11px] font-medium leading-tight">
+                        {category.name_en}
+                      </span>
+                      <span className="block text-[9px] text-muted-foreground hindi-text">
+                        {category.name_hi}
+                      </span>
+                    </div>
                   </Link>
                 ))}
               </div>
@@ -204,7 +236,7 @@ export function HomePage() {
 
         {/* Welcome / Login prompt */}
         {!user && (
-          <Card className="border-dashed">
+          <Card className="border-dashed shadow-sm">
             <CardContent className="py-6 text-center">
               <p className="text-sm text-muted-foreground">
                 Login to place orders and track your purchases
