@@ -2,14 +2,14 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Geeta Traders - Modern E-commerce Theme
-   Flipkart/Myntra inspired - clean, premium look
+/* Geeta Traders - Multi-Theme E-commerce
    All colors are HSL
 */
 
 @layer base {
-  :root {
-    /* Light, clean background */
+  /* Default / Mint Theme */
+  :root,
+  .theme-mint {
     --background: 0 0% 97%;
     --foreground: 222 47% 11%;
 
@@ -19,27 +19,21 @@
     --popover: 0 0% 100%;
     --popover-foreground: 222 47% 11%;
 
-    /* Primary: Modern Teal */
     --primary: 174 72% 40%;
     --primary-foreground: 0 0% 100%;
 
-    /* Secondary: Light Gray */
     --secondary: 220 14% 96%;
     --secondary-foreground: 222 47% 20%;
 
-    /* Muted: Soft Gray */
     --muted: 220 14% 94%;
     --muted-foreground: 220 9% 46%;
 
-    /* Accent: Vibrant Orange (for CTAs, highlights) */
     --accent: 25 95% 53%;
     --accent-foreground: 0 0% 100%;
 
-    /* Success: Green */
     --success: 142 71% 45%;
     --success-foreground: 0 0% 100%;
 
-    /* Warning: Amber */
     --warning: 38 92% 50%;
     --warning-foreground: 0 0% 0%;
 
@@ -52,7 +46,6 @@
 
     --radius: 0.75rem;
 
-    /* Custom tokens */
     --steel: 210 15% 40%;
     --cement: 40 8% 70%;
     --rust: 20 80% 45%;
@@ -67,26 +60,119 @@
     --sidebar-ring: 174 72% 40%;
   }
 
-  .dark {
-    --background: 222 47% 8%;
-    --foreground: 210 40% 98%;
+  /* Deep Blue Theme (Flipkart-like) */
+  .theme-blue {
+    --background: 220 20% 97%;
+    --foreground: 222 47% 11%;
 
-    --card: 222 47% 11%;
-    --card-foreground: 210 40% 98%;
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
 
-    --popover: 222 47% 11%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
 
-    --primary: 174 72% 50%;
+    --primary: 217 91% 60%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 222 47% 15%;
-    --secondary-foreground: 210 40% 96%;
+    --secondary: 220 14% 96%;
+    --secondary-foreground: 222 47% 20%;
 
-    --muted: 222 47% 14%;
-    --muted-foreground: 215 20% 55%;
+    --muted: 220 14% 94%;
+    --muted-foreground: 220 9% 46%;
 
-    --accent: 25 95% 55%;
+    --accent: 38 92% 50%;
+    --accent-foreground: 0 0% 0%;
+
+    --success: 142 71% 45%;
+    --success-foreground: 0 0% 100%;
+
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 0%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 217 91% 60%;
+
+    --sidebar-background: 217 91% 55%;
+    --sidebar-foreground: 0 0% 100%;
+    --sidebar-primary: 0 0% 100%;
+    --sidebar-primary-foreground: 217 91% 60%;
+    --sidebar-accent: 217 91% 50%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 217 91% 45%;
+    --sidebar-ring: 0 0% 100%;
+  }
+
+  /* Warm Orange Theme (Construction-ish) */
+  .theme-orange {
+    --background: 30 30% 97%;
+    --foreground: 20 15% 15%;
+
+    --card: 30 20% 99%;
+    --card-foreground: 20 15% 15%;
+
+    --popover: 30 20% 99%;
+    --popover-foreground: 20 15% 15%;
+
+    --primary: 24 95% 45%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 30 20% 94%;
+    --secondary-foreground: 20 15% 20%;
+
+    --muted: 30 15% 92%;
+    --muted-foreground: 20 10% 45%;
+
+    --accent: 45 100% 50%;
+    --accent-foreground: 0 0% 0%;
+
+    --success: 142 71% 45%;
+    --success-foreground: 0 0% 100%;
+
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 0%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 30 15% 88%;
+    --input: 30 15% 88%;
+    --ring: 24 95% 45%;
+
+    --sidebar-background: 24 95% 45%;
+    --sidebar-foreground: 0 0% 100%;
+    --sidebar-primary: 0 0% 100%;
+    --sidebar-primary-foreground: 24 95% 45%;
+    --sidebar-accent: 24 95% 40%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 24 95% 38%;
+    --sidebar-ring: 0 0% 100%;
+  }
+
+  /* Dark / Charcoal Theme */
+  .theme-dark {
+    --background: 240 10% 8%;
+    --foreground: 0 0% 95%;
+
+    --card: 240 10% 12%;
+    --card-foreground: 0 0% 95%;
+
+    --popover: 240 10% 12%;
+    --popover-foreground: 0 0% 95%;
+
+    --primary: 262 83% 58%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 240 10% 18%;
+    --secondary-foreground: 0 0% 90%;
+
+    --muted: 240 10% 16%;
+    --muted-foreground: 240 5% 55%;
+
+    --accent: 340 82% 52%;
     --accent-foreground: 0 0% 100%;
 
     --success: 142 71% 50%;
@@ -98,22 +184,18 @@
     --destructive: 0 72% 50%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 222 47% 18%;
-    --input: 222 47% 18%;
-    --ring: 174 72% 50%;
+    --border: 240 10% 20%;
+    --input: 240 10% 20%;
+    --ring: 262 83% 58%;
 
-    --steel: 210 12% 55%;
-    --cement: 40 6% 45%;
-    --rust: 20 70% 55%;
-
-    --sidebar-background: 222 47% 10%;
-    --sidebar-foreground: 210 40% 95%;
-    --sidebar-primary: 174 72% 50%;
+    --sidebar-background: 240 10% 10%;
+    --sidebar-foreground: 0 0% 92%;
+    --sidebar-primary: 262 83% 58%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 222 47% 14%;
-    --sidebar-accent-foreground: 210 40% 95%;
-    --sidebar-border: 222 47% 16%;
-    --sidebar-ring: 174 72% 50%;
+    --sidebar-accent: 240 10% 16%;
+    --sidebar-accent-foreground: 0 0% 92%;
+    --sidebar-border: 240 10% 18%;
+    --sidebar-ring: 262 83% 58%;
   }
 }
 
@@ -128,7 +210,6 @@
     -webkit-tap-highlight-color: transparent;
   }
 
-  /* Optimize for mobile touch */
   button, a, [role="button"] {
     touch-action: manipulation;
   }
@@ -139,7 +220,6 @@
     text-wrap: balance;
   }
 
-  /* Safe area padding for mobile */
   .safe-bottom {
     padding-bottom: env(safe-area-inset-bottom, 1rem);
   }
@@ -147,16 +227,22 @@
   .safe-top {
     padding-top: env(safe-area-inset-top, 0);
   }
+
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
 }
 
-/* PWA standalone mode adjustments */
 @media all and (display-mode: standalone) {
   body {
     @apply safe-top;
   }
 }
 
-/* Hindi font optimization */
 @font-face {
   font-family: 'System Hindi';
   src: local('Noto Sans Devanagari'), local('Mangal'), local('Arial Unicode MS');
