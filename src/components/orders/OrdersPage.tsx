@@ -4,7 +4,6 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, Package, Clock, CheckCircle, Truck } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { LanguageToggle } from '@/components/layout/LanguageToggle';
 
 export function OrdersPage() {
   const { t } = useLanguage();
@@ -32,16 +31,13 @@ export function OrdersPage() {
   return (
     <div className="min-h-screen bg-background">
       <header className="sticky top-0 z-40 border-b bg-card px-4 py-3">
-        <div className="mx-auto flex max-w-lg items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Link to="/">
-              <Button variant="ghost" size="icon" className="h-8 w-8">
-                <ArrowLeft className="h-4 w-4" />
-              </Button>
-            </Link>
-            <h1 className="text-base font-bold">{t('My Orders', 'मेरे ऑर्डर')}</h1>
-          </div>
-          <LanguageToggle />
+        <div className="mx-auto flex max-w-lg items-center gap-3">
+          <Link to="/">
+            <Button variant="ghost" size="icon" className="h-8 w-8">
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+          </Link>
+          <h1 className="text-base font-bold">{t('My Orders', 'मेरे ऑर्डर')}</h1>
         </div>
       </header>
 
