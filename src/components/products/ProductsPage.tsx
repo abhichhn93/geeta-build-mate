@@ -160,7 +160,7 @@ export function ProductsPage({ onAddToCart }: ProductsPageProps) {
               <h1 className="text-base font-bold">{t('Products', 'प्रोडक्ट्स')}</h1>
             </div>
             <div className="flex items-center gap-2">
-              {isAdmin && <ThemeSwitcher />}
+              <ThemeSwitcher />
               <LanguageToggle />
             </div>
           </div>
@@ -248,8 +248,8 @@ export function ProductsPage({ onAddToCart }: ProductsPageProps) {
           <div className="grid grid-cols-2 gap-2.5">
             {filteredProducts.map((product) => (
               <Card key={product.id} className="overflow-hidden shadow-sm hover:shadow-md transition-shadow">
-                {/* Product Image - smaller aspect ratio */}
-                <div className="relative aspect-[4/3] bg-gradient-to-br from-muted/50 to-muted">
+                {/* Product Image - compact aspect ratio for 4 visible cards */}
+                <div className="relative aspect-[5/3] bg-gradient-to-br from-muted/50 to-muted">
                   {product.image_url ? (
                     <img
                       src={product.image_url}
@@ -283,72 +283,62 @@ export function ProductsPage({ onAddToCart }: ProductsPageProps) {
                   </div>
                 </div>
 
-                <CardContent className="p-2.5">
+                <CardContent className="p-2">
                   {/* Brand + Size */}
-                  <p className="text-[10px] text-muted-foreground truncate">
+                  <p className="text-[9px] text-muted-foreground truncate">
                     {product.brand?.name || 'Generic'}{product.size && ` • ${product.size}`}
                   </p>
                   
                   {/* Product Name */}
-                  <p className="line-clamp-1 text-xs font-medium mt-0.5">
+                  <p className="line-clamp-1 text-[11px] font-medium">
                     {language === 'en' ? product.name_en : product.name_hi}
                   </p>
 
-                  {/* Price */}
-                  <div className="mt-1 flex items-baseline gap-1">
-                    <span className="text-sm font-bold text-primary">
-                      {formatINR(product.price)}
-                    </span>
-                    <span className="text-[9px] text-muted-foreground">
-                      /{product.unit}
-                    </span>
-                  </div>
-
-                  {/* Add to Cart */}
-                  <div className="mt-2">
-                    {getQuantity(product.id) > 0 ? (
-                      <div className="flex items-center gap-1">
-                        <div className="flex flex-1 items-center justify-between rounded border h-7">
+                  {/* Price + Add Button in same row */}
+                  <div className="mt-1.5 flex items-center justify-between gap-1">
+                    <div className="flex items-baseline gap-0.5">
+                      <span className="text-xs font-bold text-primary">
+                        {formatINR(product.price)}
+                      </span>
+                      <span className="text-[8px] text-muted-foreground">
+                        /{product.unit}
+                      </span>
+                    </div>
+                    
+                    {/* Compact Add Button */}
+                    <div>
+                      {getQuantity(product.id) > 0 ? (
+                        <div className="flex items-center rounded border h-6">
                           <Button
                             size="icon"
                             variant="ghost"
-                            className="h-7 w-7 rounded-l"
+                            className="h-6 w-6 rounded-l"
                             onClick={() => handleQuantityChange(product.id, -1)}
                           >
-                            <Minus className="h-3 w-3" />
+                            <Minus className="h-2.5 w-2.5" />
                           </Button>
-                          <span className="text-xs font-medium">{getQuantity(product.id)}</span>
+                          <span className="text-[10px] font-medium w-4 text-center">{getQuantity(product.id)}</span>
                           <Button
                             size="icon"
                             variant="ghost"
-                            className="h-7 w-7 rounded-r"
+                            className="h-6 w-6 rounded-r"
                             onClick={() => handleQuantityChange(product.id, 1)}
                           >
-                            <Plus className="h-3 w-3" />
+                            <Plus className="h-2.5 w-2.5" />
                           </Button>
                         </div>
+                      ) : (
                         <Button
-                          size="icon"
-                          className="h-7 w-7"
-                          onClick={() => {
-                            onAddToCart?.(product, getQuantity(product.id));
-                            setQuantities((prev) => ({ ...prev, [product.id]: 0 }));
-                          }}
+                          size="sm"
+                          className="h-6 text-[10px] px-2"
+                          disabled={product.stock_status === 'out_of_stock'}
+                          onClick={() => handleQuantityChange(product.id, 1)}
                         >
-                          <ShoppingCart className="h-3 w-3" />
+                          <Plus className="h-2.5 w-2.5 mr-0.5" />
+                          {t('Add', 'जोड़ें')}
                         </Button>
-                      </div>
-                    ) : (
-                      <Button
-                        size="sm"
-                        className="w-full h-7 text-xs"
-                        disabled={product.stock_status === 'out_of_stock'}
-                        onClick={() => handleQuantityChange(product.id, 1)}
-                      >
-                        <Plus className="mr-1 h-3 w-3" />
-                        {t('Add', 'जोड़ें')}
-                      </Button>
-                    )}
+                      )}
+                    </div>
                   </div>
                 </CardContent>
               </Card>
