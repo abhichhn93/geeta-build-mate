@@ -6,7 +6,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowLeft, LogOut, User, Phone, Mail, Shield, Check } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
-import { LanguageToggle } from '@/components/layout/LanguageToggle';
 
 export function AccountPage() {
   const { user, role, isAdmin, signOut } = useAuth();
@@ -40,16 +39,13 @@ export function AccountPage() {
     <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="sticky top-0 z-40 border-b bg-card px-4 py-3">
-        <div className="mx-auto flex max-w-lg items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Link to="/">
-              <Button variant="ghost" size="icon" className="h-8 w-8">
-                <ArrowLeft className="h-4 w-4" />
-              </Button>
-            </Link>
-            <h1 className="text-base font-bold">{t('Account', 'खाता')}</h1>
-          </div>
-          <LanguageToggle />
+        <div className="mx-auto flex max-w-lg items-center gap-3">
+          <Link to="/">
+            <Button variant="ghost" size="icon" className="h-8 w-8">
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+          </Link>
+          <h1 className="text-base font-bold">{t('Account', 'खाता')}</h1>
         </div>
       </header>
 

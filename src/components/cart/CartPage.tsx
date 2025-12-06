@@ -6,8 +6,6 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { LanguageToggle } from '@/components/layout/LanguageToggle';
-import { ThemeSwitcher } from '@/components/layout/ThemeSwitcher';
 import { useState } from 'react';
 import {
   ArrowLeft,
@@ -63,10 +61,6 @@ export function CartPage() {
                 </Button>
               </Link>
               <h1 className="text-lg font-bold">{t('Cart', 'कार्ट')}</h1>
-            </div>
-            <div className="flex items-center gap-2">
-              <ThemeSwitcher />
-              <LanguageToggle />
             </div>
           </div>
         </header>

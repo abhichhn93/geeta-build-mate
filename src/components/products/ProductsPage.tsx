@@ -13,8 +13,6 @@ import { Input } from '@/components/ui/input';
 import { ProductFilters, ProductFiltersState } from './ProductFilters';
 import { ProductEditModal } from './ProductEditModal';
 import { BranchSelector } from './BranchSelector';
-import { LanguageToggle } from '@/components/layout/LanguageToggle';
-import { ThemeSwitcher } from '@/components/layout/ThemeSwitcher';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -237,10 +235,10 @@ export function ProductsPage({ onAddToCart }: ProductsPageProps) {
               </Link>
               <h1 className="text-base font-bold">{t('Products', 'प्रोडक्ट्स')}</h1>
             </div>
-            <div className="flex items-center gap-2">
-              <ThemeSwitcher />
-              <LanguageToggle />
-            </div>
+            <BranchSelector
+              selectedBranch={selectedBranch}
+              onBranchChange={setSelectedBranch}
+            />
           </div>
 
           {/* Search */}
@@ -257,18 +255,8 @@ export function ProductsPage({ onAddToCart }: ProductsPageProps) {
         </div>
       </header>
 
-      {/* Branch Selector */}
-      <div className="sticky top-[85px] z-35 border-b bg-card/95 backdrop-blur-sm px-4 py-2">
-        <div className="mx-auto max-w-lg">
-          <BranchSelector
-            selectedBranch={selectedBranch}
-            onBranchChange={setSelectedBranch}
-          />
-        </div>
-      </div>
-
       {/* Category Filter + Filters Button */}
-      <div className="sticky top-[125px] z-30 border-b bg-card shadow-sm">
+      <div className="sticky top-[85px] z-30 border-b bg-card shadow-sm">
         <div className="mx-auto max-w-lg overflow-x-auto px-4 py-2 scrollbar-hide">
           <div className="flex items-center gap-1.5">
             {categories && brands && (
