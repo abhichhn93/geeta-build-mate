@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/sheet';
 import { SlidersHorizontal, X } from 'lucide-react';
 import { Category, Brand } from '@/hooks/useProducts';
+import { useLanguage } from '@/hooks/useLanguage';
 
 // TMT sizes in mm
 const TMT_SIZES = ['6mm', '8mm', '10mm', '12mm', '16mm', '20mm', '25mm', '32mm'];
@@ -22,11 +23,18 @@ const CEMENT_SIZES = ['50kg bag'];
 const WIRE_SIZES = ['18 gauge', '20 gauge', '22 gauge', '5kg bundle', '10kg bundle'];
 // General sizes for angles/channels
 const STEEL_SIZES = ['25x25mm', '40x40mm', '50x50mm', '75x75mm'];
+// Stock status options
+const STOCK_STATUS_OPTIONS = [
+  { value: 'in_stock', labelEn: 'In Stock', labelHi: 'स्टॉक में' },
+  { value: 'low_stock', labelEn: 'Low Stock', labelHi: 'कम स्टॉक' },
+  { value: 'out_of_stock', labelEn: 'Out of Stock', labelHi: 'स्टॉक खत्म' },
+];
 
 export interface ProductFiltersState {
   categories: string[];
   brands: string[];
   sizes: string[];
+  stockStatus: string[];
   priceRange: [number, number];
 }
 
@@ -45,6 +53,7 @@ export function ProductFilters({
   onFiltersChange,
   maxPrice = 10000,
 }: ProductFiltersProps) {
+  const { t, language } = useLanguage();
   const [isOpen, setIsOpen] = useState(false);
   const [localFilters, setLocalFilters] = useState<ProductFiltersState>(filters);
 
@@ -108,6 +117,15 @@ export function ProductFilters({
     }));
   };
 
+  const toggleStockStatus = (status: string) => {
+    setLocalFilters((prev) => ({
+      ...prev,
+      stockStatus: prev.stockStatus.includes(status)
+        ? prev.stockStatus.filter((s) => s !== status)
+        : [...prev.stockStatus, status],
+    }));
+  };
+
   const handlePriceChange = (value: number[]) => {
     setLocalFilters((prev) => ({
       ...prev,
@@ -125,6 +143,7 @@ export function ProductFilters({
       categories: [],
       brands: [],
       sizes: [],
+      stockStatus: [],
       priceRange: [0, maxPrice],
     };
     setLocalFilters(resetFilters);
@@ -135,6 +154,7 @@ export function ProductFilters({
     filters.categories.length +
     filters.brands.length +
     filters.sizes.length +
+    filters.stockStatus.length +
     (filters.priceRange[0] > 0 || filters.priceRange[1] < maxPrice ? 1 : 0);
 
   return (
@@ -143,12 +163,12 @@ export function ProductFilters({
         <Button
           variant="outline"
           size="sm"
-          className="shrink-0 gap-2 rounded-full border-primary/20"
+          className="shrink-0 gap-2 rounded-full border-primary/20 h-7 text-xs px-3"
         >
-          <SlidersHorizontal className="h-4 w-4" />
-          Filters
+          <SlidersHorizontal className="h-3.5 w-3.5" />
+          {t('Filters', 'फ़िल्टर')}
           {activeFilterCount > 0 && (
-            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-xs text-primary-foreground">
+            <span className="flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] text-primary-foreground">
               {activeFilterCount}
             </span>
           )}
@@ -158,7 +178,7 @@ export function ProductFilters({
       <SheetContent side="bottom" className="max-h-[85vh] overflow-y-auto rounded-t-2xl pb-20">
         <SheetHeader className="pb-4">
           <SheetTitle className="flex items-center justify-between">
-            <span>Filters / फ़िल्टर</span>
+            <span>{t('Filters', 'फ़िल्टर')}</span>
             <Button
               variant="ghost"
               size="sm"
@@ -166,7 +186,7 @@ export function ProductFilters({
               className="text-muted-foreground"
             >
               <X className="mr-1 h-4 w-4" />
-              Clear All
+              {t('Clear All', 'सब हटाएं')}
             </Button>
           </SheetTitle>
         </SheetHeader>
@@ -175,7 +195,7 @@ export function ProductFilters({
           {/* Category Filter */}
           <div>
             <Label className="mb-3 block text-sm font-medium">
-              Category / श्रेणी
+              {t('Category', 'श्रेणी')}
             </Label>
             <div className="flex flex-wrap gap-2">
               {categories.map((category) => (
@@ -186,7 +206,7 @@ export function ProductFilters({
                   onClick={() => toggleCategory(category.id)}
                   className="rounded-full text-xs"
                 >
-                  {category.name_en}
+                  {language === 'en' ? category.name_en : category.name_hi}
                 </Button>
               ))}
             </div>
@@ -195,7 +215,7 @@ export function ProductFilters({
           {/* Brand Filter */}
           <div>
             <Label className="mb-3 block text-sm font-medium">
-              Brand / ब्रांड
+              {t('Brand', 'ब्रांड')}
             </Label>
             <div className="grid grid-cols-2 gap-2">
               {brands.map((brand) => (
@@ -216,10 +236,30 @@ export function ProductFilters({
             </div>
           </div>
 
+          {/* Stock Status Filter */}
+          <div>
+            <Label className="mb-3 block text-sm font-medium">
+              {t('Stock Status', 'स्टॉक स्थिति')}
+            </Label>
+            <div className="flex flex-wrap gap-2">
+              {STOCK_STATUS_OPTIONS.map((status) => (
+                <Button
+                  key={status.value}
+                  variant={localFilters.stockStatus.includes(status.value) ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => toggleStockStatus(status.value)}
+                  className="rounded-full text-xs"
+                >
+                  {language === 'en' ? status.labelEn : status.labelHi}
+                </Button>
+              ))}
+            </div>
+          </div>
+
           {/* Size Filter */}
           <div>
             <Label className="mb-3 block text-sm font-medium">
-              Size / साइज़
+              {t('Size', 'साइज़')}
             </Label>
             <div className="flex flex-wrap gap-2">
               {availableSizes.map((size) => (
@@ -239,7 +279,7 @@ export function ProductFilters({
           {/* Price Range */}
           <div>
             <Label className="mb-3 block text-sm font-medium">
-              Price Range / कीमत सीमा
+              {t('Price Range', 'कीमत सीमा')}
             </Label>
             <div className="px-2">
               <Slider
@@ -264,10 +304,10 @@ export function ProductFilters({
             className="flex-1"
             onClick={() => setIsOpen(false)}
           >
-            Cancel
+            {t('Cancel', 'रद्द करें')}
           </Button>
           <Button className="flex-1" onClick={handleApply}>
-            Apply Filters
+            {t('Apply Filters', 'फ़िल्टर लगाएं')}
           </Button>
         </SheetFooter>
       </SheetContent>

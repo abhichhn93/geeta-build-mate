@@ -56,6 +56,7 @@ const defaultFilters: ProductFiltersState = {
   categories: [],
   brands: [],
   sizes: [],
+  stockStatus: [],
   priceRange: [0, 10000],
 };
 
@@ -104,6 +105,11 @@ export function ProductsPage({ onAddToCart }: ProductsPageProps) {
 
       if (filters.sizes.length > 0) {
         if (!product.size || !filters.sizes.includes(product.size)) return false;
+      }
+
+      // Stock status filter
+      if (filters.stockStatus.length > 0) {
+        if (!product.stock_status || !filters.stockStatus.includes(product.stock_status)) return false;
       }
 
       if (product.price < filters.priceRange[0] || product.price > filters.priceRange[1]) {
