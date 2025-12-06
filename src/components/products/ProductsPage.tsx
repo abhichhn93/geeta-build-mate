@@ -2,13 +2,15 @@ import { useState, useMemo } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { useProducts, useCategories, useBrands, Product } from '@/hooks/useProducts';
 import { useAuth } from '@/hooks/useAuth';
+import { useLanguage } from '@/hooks/useLanguage';
 import { formatINR } from '@/lib/whatsapp';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { ProductFilters, ProductFiltersState } from './ProductFilters';
-import { 
+import { LanguageToggle } from '@/components/layout/LanguageToggle';
+import {
   Plus, 
   Minus, 
   ShoppingCart, 
@@ -66,6 +68,7 @@ export function ProductsPage({ onAddToCart, onEditProduct, onDeleteProduct }: Pr
   const [filters, setFilters] = useState<ProductFiltersState>(defaultFilters);
 
   const { isAdmin } = useAuth();
+  const { language, t } = useLanguage();
   const { data: products, isLoading } = useProducts(); // Fetch all products for filtering
   const { data: categories } = useCategories();
   const { data: brands } = useBrands();
@@ -138,11 +141,11 @@ export function ProductsPage({ onAddToCart, onEditProduct, onDeleteProduct }: Pr
   const getStockBadge = (status: string | null) => {
     switch (status) {
       case 'in_stock':
-        return <Badge className="bg-success/20 text-success border-0 text-[10px]">In Stock</Badge>;
+        return <Badge className="bg-success/20 text-success border-0 text-[10px]">{t('In Stock', 'स्टॉक में')}</Badge>;
       case 'low_stock':
-        return <Badge className="bg-warning/20 text-warning border-0 text-[10px]">Low Stock</Badge>;
+        return <Badge className="bg-warning/20 text-warning border-0 text-[10px]">{t('Low Stock', 'कम स्टॉक')}</Badge>;
       case 'out_of_stock':
-        return <Badge className="bg-destructive/20 text-destructive border-0 text-[10px]">Out of Stock</Badge>;
+        return <Badge className="bg-destructive/20 text-destructive border-0 text-[10px]">{t('Out of Stock', 'स्टॉक खत्म')}</Badge>;
       default:
         return null;
     }
@@ -153,15 +156,16 @@ export function ProductsPage({ onAddToCart, onEditProduct, onDeleteProduct }: Pr
       {/* Header */}
       <header className="sticky top-0 z-40 border-b bg-card px-4 py-3 shadow-sm">
         <div className="mx-auto max-w-lg">
-          <div className="mb-3 flex items-center gap-3">
-            <Link to="/">
-              <Button variant="ghost" size="icon" className="h-9 w-9">
-                <ArrowLeft className="h-5 w-5" />
-              </Button>
-            </Link>
-            <div>
-              <h1 className="text-lg font-bold">Products / प्रोडक्ट्स</h1>
+          <div className="mb-3 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Link to="/">
+                <Button variant="ghost" size="icon" className="h-9 w-9">
+                  <ArrowLeft className="h-5 w-5" />
+                </Button>
+              </Link>
+              <h1 className="text-lg font-bold">{t('Products', 'प्रोडक्ट्स')}</h1>
             </div>
+            <LanguageToggle />
           </div>
 
           {/* Search */}
@@ -169,7 +173,7 @@ export function ProductsPage({ onAddToCart, onEditProduct, onDeleteProduct }: Pr
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               type="text"
-              placeholder="Search products... / खोजें..."
+              placeholder={t('Search products...', 'प्रोडक्ट खोजें...')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-9 bg-muted/50 border-0"
@@ -200,7 +204,7 @@ export function ProductsPage({ onAddToCart, onEditProduct, onDeleteProduct }: Pr
               onClick={() => handleCategoryChange('all')}
               className="shrink-0 rounded-full"
             >
-              All / सभी
+              {t('All', 'सभी')}
             </Button>
             {categories?.map((category) => (
               <Button
@@ -211,7 +215,7 @@ export function ProductsPage({ onAddToCart, onEditProduct, onDeleteProduct }: Pr
                 className="shrink-0 gap-1.5 rounded-full"
               >
                 {getCategoryIcon(category.name_en)}
-                {category.name_en}
+                {language === 'en' ? category.name_en : category.name_hi}
               </Button>
             ))}
           </div>
@@ -291,9 +295,8 @@ export function ProductsPage({ onAddToCart, onEditProduct, onDeleteProduct }: Pr
                   
                   {/* Product Info */}
                   <div className="mb-2">
-                    <p className="line-clamp-1 text-sm font-medium">{product.name_en}</p>
-                    <p className="line-clamp-1 text-xs text-muted-foreground hindi-text">
-                      {product.name_hi}
+                    <p className="line-clamp-1 text-sm font-medium">
+                      {language === 'en' ? product.name_en : product.name_hi}
                     </p>
                   </div>
 
@@ -303,7 +306,7 @@ export function ProductsPage({ onAddToCart, onEditProduct, onDeleteProduct }: Pr
                       {formatINR(product.price)}
                     </span>
                     <span className="text-xs text-muted-foreground ml-1">
-                      प्रति {product.unit} / per {product.unit}
+                      {t(`per ${product.unit}`, `प्रति ${product.unit}`)}
                     </span>
                   </div>
 
@@ -349,7 +352,7 @@ export function ProductsPage({ onAddToCart, onEditProduct, onDeleteProduct }: Pr
                         onClick={() => handleQuantityChange(product.id, 1)}
                       >
                         <Plus className="mr-1 h-4 w-4" />
-                        Add to Cart
+                        {t('Add to Cart', 'कार्ट में डालें')}
                       </Button>
                     )}
                   </div>
@@ -362,10 +365,11 @@ export function ProductsPage({ onAddToCart, onEditProduct, onDeleteProduct }: Pr
             <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-muted">
               <Package className="h-8 w-8 text-muted-foreground" />
             </div>
-            <p className="font-medium text-foreground">No products found</p>
-            <p className="text-sm text-muted-foreground hindi-text">कोई प्रोडक्ट नहीं मिला</p>
+            <p className="font-medium text-foreground">
+              {t('No products found', 'कोई प्रोडक्ट नहीं मिला')}
+            </p>
             <p className="mt-2 text-xs text-muted-foreground">
-              Products will appear here once added by admin
+              {t('Products will appear here once added by admin', 'एडमिन द्वारा जोड़े जाने पर प्रोडक्ट यहां दिखेंगे')}
             </p>
           </div>
         )}
