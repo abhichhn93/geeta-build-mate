@@ -1,12 +1,13 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
-import { useProducts, useCategories, Product } from '@/hooks/useProducts';
+import { useProducts, useCategories, useBrands, Product } from '@/hooks/useProducts';
 import { useAuth } from '@/hooks/useAuth';
 import { formatINR } from '@/lib/whatsapp';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { ProductFilters, ProductFiltersState } from './ProductFilters';
 import { 
   Plus, 
   Minus, 
@@ -50,26 +51,71 @@ interface ProductsPageProps {
   onDeleteProduct?: (product: ProductWithRelations) => void;
 }
 
+const defaultFilters: ProductFiltersState = {
+  categories: [],
+  brands: [],
+  sizes: [],
+  priceRange: [0, 10000],
+};
+
 export function ProductsPage({ onAddToCart, onEditProduct, onDeleteProduct }: ProductsPageProps) {
   const [searchParams, setSearchParams] = useSearchParams();
   const selectedCategory = searchParams.get('category') || 'all';
   const [searchQuery, setSearchQuery] = useState('');
   const [quantities, setQuantities] = useState<Record<string, number>>({});
+  const [filters, setFilters] = useState<ProductFiltersState>(defaultFilters);
 
   const { isAdmin } = useAuth();
-  const { data: products, isLoading } = useProducts(selectedCategory === 'all' ? undefined : selectedCategory);
+  const { data: products, isLoading } = useProducts(); // Fetch all products for filtering
   const { data: categories } = useCategories();
+  const { data: brands } = useBrands();
 
-  // Filter products by search
-  const filteredProducts = products?.filter((product) => {
-    if (!searchQuery) return true;
-    const query = searchQuery.toLowerCase();
-    return (
-      product.name_en.toLowerCase().includes(query) ||
-      product.name_hi.toLowerCase().includes(query) ||
-      product.brand?.name.toLowerCase().includes(query)
-    );
-  }) as ProductWithRelations[] | undefined;
+  // Calculate max price from products
+  const maxPrice = useMemo(() => {
+    if (!products || products.length === 0) return 10000;
+    return Math.ceil(Math.max(...products.map((p) => p.price)) / 100) * 100;
+  }, [products]);
+
+  // Apply all filters
+  const filteredProducts = useMemo(() => {
+    if (!products) return [];
+
+    return products.filter((product) => {
+      // Search filter
+      if (searchQuery) {
+        const query = searchQuery.toLowerCase();
+        const matchesSearch =
+          product.name_en.toLowerCase().includes(query) ||
+          product.name_hi.toLowerCase().includes(query) ||
+          product.brand?.name?.toLowerCase().includes(query);
+        if (!matchesSearch) return false;
+      }
+
+      // Category filter (from URL param or filter panel)
+      if (selectedCategory !== 'all') {
+        if (product.category_id !== selectedCategory) return false;
+      } else if (filters.categories.length > 0) {
+        if (!product.category_id || !filters.categories.includes(product.category_id)) return false;
+      }
+
+      // Brand filter
+      if (filters.brands.length > 0) {
+        if (!product.brand_id || !filters.brands.includes(product.brand_id)) return false;
+      }
+
+      // Size filter
+      if (filters.sizes.length > 0) {
+        if (!product.size || !filters.sizes.includes(product.size)) return false;
+      }
+
+      // Price filter
+      if (product.price < filters.priceRange[0] || product.price > filters.priceRange[1]) {
+        return false;
+      }
+
+      return true;
+    });
+  }, [products, searchQuery, selectedCategory, filters]) as ProductWithRelations[];
 
   const handleCategoryChange = (categoryId: string) => {
     if (categoryId === 'all') {
@@ -132,10 +178,22 @@ export function ProductsPage({ onAddToCart, onEditProduct, onDeleteProduct }: Pr
         </div>
       </header>
 
-      {/* Category Filter */}
+      {/* Category Filter + Filters Button */}
       <div className="sticky top-[105px] z-30 border-b bg-card shadow-sm">
         <div className="mx-auto max-w-lg overflow-x-auto px-4 py-2 scrollbar-hide">
-          <div className="flex gap-2">
+          <div className="flex items-center gap-2">
+            {/* Filters Button */}
+            {categories && brands && (
+              <ProductFilters
+                categories={categories}
+                brands={brands}
+                filters={filters}
+                onFiltersChange={setFilters}
+                maxPrice={maxPrice}
+              />
+            )}
+            
+            {/* Category Pills */}
             <Button
               variant={selectedCategory === 'all' ? 'default' : 'outline'}
               size="sm"
