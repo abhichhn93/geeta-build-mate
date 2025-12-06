@@ -146,7 +146,7 @@ export function CartPage() {
                   {/* Details */}
                   <div className="flex-1 min-w-0">
                     <p className="text-xs text-muted-foreground">
-                      {item.brand}{item.size && ` • ${item.size}`}
+                      {[item.brand, item.size].filter(Boolean).join(' • ') || '—'}
                     </p>
                     <p className="font-medium text-sm truncate">{item.name}</p>
                     <p className="text-xs text-primary font-semibold mt-0.5">
