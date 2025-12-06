@@ -10,6 +10,8 @@ export interface CartItem {
   unit: string;
   quantity: number;
   imageUrl?: string | null;
+  branchId?: string | null;
+  branchName?: string | null;
 }
 
 interface CartContextType {

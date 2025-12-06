@@ -30,12 +30,18 @@ export function CartPage() {
       return;
     }
 
+    // Get branch info from first item (assuming all items from same branch selection)
+    const branchName = items[0]?.branchName || 'All Branches';
+
     const orderDetails = {
       customerName: customerName.trim(),
       address: address.trim() || undefined,
+      branchName,
       items: items.map(item => ({
         name: item.name,
         nameHi: item.nameHi,
+        brand: item.brand,
+        size: item.size,
         quantity: item.quantity,
         unit: item.unit,
         price: item.price,
