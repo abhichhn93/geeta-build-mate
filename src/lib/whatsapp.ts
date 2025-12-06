@@ -4,6 +4,8 @@
 export interface CartItem {
   name: string;
   nameHi?: string;
+  brand?: string | null;
+  size?: string | null;
   quantity: number;
   unit: string;
   price: number;
@@ -14,6 +16,7 @@ export interface OrderDetails {
   customerName: string;
   address?: string;
   phone?: string;
+  branchName?: string;
   items: CartItem[];
   totalAmount: number;
 }
@@ -39,35 +42,33 @@ export function formatINR(amount: number): string {
 // Generate WhatsApp share link for order
 export function generateOrderWhatsAppLink(order: OrderDetails, phoneNumber?: string): string {
   const lines: string[] = [
-    '🏗️ *गीता ट्रेडर्स / Geeta Traders*',
-    '📍 Mohammadabad Gohna, Mau, UP',
+    '*Order from Geeta Traders*',
     '',
-    '━━━━━━━━━━━━━━━━━━━━',
-    `👤 *Customer / ग्राहक:* ${order.customerName}`,
   ];
 
-  if (order.address) {
-    lines.push(`📍 *Address / पता:* ${order.address}`);
+  if (order.branchName) {
+    lines.push(`🏬 Branch: ${order.branchName}`);
   }
 
-  lines.push('', '*Order Details / ऑर्डर विवरण:*', '');
+  lines.push(`👤 Customer: ${order.customerName}`);
 
-  order.items.forEach((item, index) => {
-    const itemName = item.nameHi ? `${item.name} (${item.nameHi})` : item.name;
+  if (order.address) {
+    lines.push(`📍 Address: ${order.address}`);
+  }
+
+  lines.push('', '*Items:*');
+
+  order.items.forEach((item) => {
+    const brandSize = [item.brand, item.size].filter(Boolean).join(' ');
+    const itemDesc = brandSize ? `${brandSize} ${item.name}` : item.name;
     lines.push(
-      `${index + 1}. ${itemName}`,
-      `   Qty: ${item.quantity} ${item.unit} × ${formatINR(item.price)}`,
-      `   = ${formatINR(item.total)}`,
-      ''
+      `• ${item.quantity} × ${itemDesc} – ${formatINR(item.price)} per ${item.unit} – ${formatINR(item.total)}`
     );
   });
 
   lines.push(
-    '━━━━━━━━━━━━━━━━━━━━',
-    `💰 *Total / कुल:* ${formatINR(order.totalAmount)}`,
     '',
-    '🙏 धन्यवाद! Thank you for your order!',
-    '📞 Contact: +91-XXXXXXXXXX'
+    `*Total: ${formatINR(order.totalAmount)}*`
   );
 
   const message = lines.join('\n');

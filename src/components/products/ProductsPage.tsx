@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { useProducts, useCategories, useBrands, useDeleteProduct, Product } from '@/hooks/useProducts';
 import { useProductStocks, getAggregatedStock } from '@/hooks/useProductStocks';
+import { useBranches } from '@/hooks/useBranches';
 import { useAuth } from '@/hooks/useAuth';
 import { useLanguage } from '@/hooks/useLanguage';
 import { useCart } from '@/hooks/useCart';
@@ -88,6 +89,7 @@ export function ProductsPage({ onAddToCart }: ProductsPageProps) {
   const { data: products, isLoading } = useProducts();
   const { data: categories } = useCategories();
   const { data: brands } = useBrands();
+  const { data: branches } = useBranches();
   const { data: productStocks } = useProductStocks(selectedBranch);
   const deleteProduct = useDeleteProduct();
 
@@ -160,6 +162,7 @@ export function ProductsPage({ onAddToCart }: ProductsPageProps) {
   };
 
   const handleAddToCart = (product: ProductWithRelations) => {
+    const selectedBranchData = branches?.find(b => b.id === selectedBranch);
     addItem({
       productId: product.id,
       name: product.name_en,
@@ -169,6 +172,8 @@ export function ProductsPage({ onAddToCart }: ProductsPageProps) {
       price: product.price,
       unit: product.unit,
       imageUrl: product.image_url,
+      branchId: selectedBranch !== 'all' ? selectedBranch : undefined,
+      branchName: selectedBranch !== 'all' ? selectedBranchData?.name : 'All Branches',
     });
     toast.success(t('Added to cart', 'कार्ट में जोड़ा गया'));
   };
