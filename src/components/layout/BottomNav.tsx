@@ -1,6 +1,7 @@
 import { NavLink, useLocation } from 'react-router-dom';
 import { Home, Package, ShoppingCart, ClipboardList, User, Settings } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import { useLanguage } from '@/hooks/useLanguage';
 import { cn } from '@/lib/utils';
 
 const customerNavItems = [
@@ -21,6 +22,7 @@ const adminNavItems = [
 
 export function BottomNav() {
   const { isAdmin } = useAuth();
+  const { language } = useLanguage();
   const location = useLocation();
   const navItems = isAdmin ? adminNavItems : customerNavItems;
 
@@ -42,9 +44,8 @@ export function BottomNav() {
                 className={cn('h-5 w-5', isActive && 'fill-primary/20')}
                 strokeWidth={isActive ? 2.5 : 2}
               />
-              <span className="text-[10px] font-medium">{item.label}</span>
-              <span className="text-[8px] text-muted-foreground hindi-text">
-                {item.labelHi}
+              <span className="text-[10px] font-medium">
+                {language === 'en' ? item.label : item.labelHi}
               </span>
             </NavLink>
           );

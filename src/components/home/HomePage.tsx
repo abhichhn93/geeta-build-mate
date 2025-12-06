@@ -1,10 +1,12 @@
 import { useAuth } from '@/hooks/useAuth';
+import { useLanguage } from '@/hooks/useLanguage';
 import { useDailyRates } from '@/hooks/useDailyRates';
 import { useCategories } from '@/hooks/useProducts';
 import { formatINR } from '@/lib/whatsapp';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { LanguageToggle } from '@/components/layout/LanguageToggle';
 import { 
   Share2, 
   TrendingUp, 
@@ -38,6 +40,7 @@ const getCategoryIcon = (nameEn: string) => {
 
 export function HomePage() {
   const { user, isAdmin } = useAuth();
+  const { language, t } = useLanguage();
   const { data: rates, isLoading: ratesLoading } = useDailyRates();
   const { data: categories } = useCategories();
 
@@ -56,13 +59,17 @@ export function HomePage() {
     <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="sticky top-0 z-40 border-b bg-card px-4 py-4 shadow-sm">
-        <div className="mx-auto max-w-lg">
-          <h1 className="text-xl font-bold text-foreground">गीता ट्रेडर्स</h1>
-          <p className="text-sm text-muted-foreground">Geeta Traders</p>
-          <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
-            <MapPin className="h-3 w-3" />
-            Mohammadabad Gohna, Mau, UP
-          </p>
+        <div className="mx-auto flex max-w-lg items-start justify-between">
+          <div>
+            <h1 className="text-xl font-bold text-foreground">
+              {t('Geeta Traders', 'गीता ट्रेडर्स')}
+            </h1>
+            <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
+              <MapPin className="h-3 w-3" />
+              Mohammadabad Gohna, Mau, UP
+            </p>
+          </div>
+          <LanguageToggle />
         </div>
       </header>
 
@@ -74,10 +81,10 @@ export function HomePage() {
               <div>
                 <CardTitle className="flex items-center gap-2 text-lg">
                   <TrendingUp className="h-5 w-5 text-primary" />
-                  आज का रेट / Today's Rate
+                  {t("Today's Rate", 'आज का रेट')}
                 </CardTitle>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  {new Date().toLocaleDateString('hi-IN', {
+                  {new Date().toLocaleDateString(language === 'hi' ? 'hi-IN' : 'en-IN', {
                     weekday: 'long',
                     day: 'numeric',
                     month: 'long',
@@ -110,7 +117,7 @@ export function HomePage() {
                   <div>
                     <h3 className="mb-2 flex items-center gap-2 font-semibold">
                       <Badge variant="secondary">
-                        सरिया / TMT
+                        {t('TMT', 'सरिया')}
                       </Badge>
                     </h3>
                     <div className="grid grid-cols-2 gap-2">
@@ -139,7 +146,7 @@ export function HomePage() {
                   <div>
                     <h3 className="mb-2 flex items-center gap-2 font-semibold">
                       <Badge variant="secondary">
-                        सीमेंट / Cement
+                        {t('Cement', 'सीमेंट')}
                       </Badge>
                     </h3>
                     <div className="grid grid-cols-2 gap-2">
@@ -160,8 +167,7 @@ export function HomePage() {
               </div>
             ) : (
               <div className="py-8 text-center text-muted-foreground">
-                <p>No rates available for today</p>
-                <p className="text-sm hindi-text">आज के लिए कोई रेट उपलब्ध नहीं</p>
+                <p>{t('No rates available for today', 'आज के लिए कोई रेट उपलब्ध नहीं')}</p>
               </div>
             )}
           </CardContent>
@@ -175,12 +181,9 @@ export function HomePage() {
                 <div className="rounded-xl bg-primary/10 p-3">
                   <Package className="h-6 w-6 text-primary" />
                 </div>
-                <div className="text-center">
-                  <p className="font-medium">Products</p>
-                  <p className="text-xs text-muted-foreground hindi-text">
-                    प्रोडक्ट देखें
-                  </p>
-                </div>
+                <p className="font-medium text-center">
+                  {t('Products', 'प्रोडक्ट देखें')}
+                </p>
               </CardContent>
             </Card>
           </Link>
@@ -191,12 +194,9 @@ export function HomePage() {
                 <div className="rounded-xl bg-primary/10 p-3">
                   <Calculator className="h-6 w-6 text-primary" />
                 </div>
-                <div className="text-center">
-                  <p className="font-medium">TMT Calculator</p>
-                  <p className="text-xs text-muted-foreground hindi-text">
-                    वजन कैलकुलेटर
-                  </p>
-                </div>
+                <p className="font-medium text-center">
+                  {t('TMT Calculator', 'वजन कैलकुलेटर')}
+                </p>
               </CardContent>
             </Card>
           </Link>
@@ -206,7 +206,7 @@ export function HomePage() {
         {categories && categories.length > 0 && (
           <Card className="shadow-sm">
             <CardHeader className="pb-2">
-              <CardTitle className="text-base">Categories / श्रेणियाँ</CardTitle>
+              <CardTitle className="text-base">{t('Categories', 'श्रेणियाँ')}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-4 gap-3">
@@ -219,14 +219,9 @@ export function HomePage() {
                     <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-muted text-muted-foreground">
                       {getCategoryIcon(category.name_en)}
                     </div>
-                    <div>
-                      <span className="block text-[11px] font-medium leading-tight">
-                        {category.name_en}
-                      </span>
-                      <span className="block text-[9px] text-muted-foreground hindi-text">
-                        {category.name_hi}
-                      </span>
-                    </div>
+                    <span className="text-[11px] font-medium leading-tight">
+                      {language === 'en' ? category.name_en : category.name_hi}
+                    </span>
                   </Link>
                 ))}
               </div>
@@ -239,14 +234,11 @@ export function HomePage() {
           <Card className="border-dashed shadow-sm">
             <CardContent className="py-6 text-center">
               <p className="text-sm text-muted-foreground">
-                Login to place orders and track your purchases
-              </p>
-              <p className="text-xs text-muted-foreground hindi-text">
-                ऑर्डर देने के लिए लॉगिन करें
+                {t('Login to place orders and track your purchases', 'ऑर्डर देने के लिए लॉगिन करें')}
               </p>
               <Link to="/auth">
                 <Button className="mt-3" size="sm">
-                  Login / लॉगिन
+                  {t('Login', 'लॉगिन')}
                 </Button>
               </Link>
             </CardContent>
