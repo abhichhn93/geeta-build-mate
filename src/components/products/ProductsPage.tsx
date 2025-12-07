@@ -14,6 +14,7 @@ import { Input } from '@/components/ui/input';
 import { ProductFilters, ProductFiltersState } from './ProductFilters';
 import { ProductEditModal } from './ProductEditModal';
 import { BranchSelector } from './BranchSelector';
+import { VoiceAssistant } from '@/components/voice/VoiceAssistant';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -368,9 +369,14 @@ export function ProductsPage({ onAddToCart }: ProductsPageProps) {
                     </div>
                   )}
 
-                  {/* Stock Badge */}
-                  <div className="absolute bottom-1 left-1">
+                  {/* Stock Badge with Quantity */}
+                  <div className="absolute bottom-1 left-1 flex items-center gap-1">
                     {getStockBadge(product.computed_stock_status)}
+                    {isAdmin && product.computed_stock_qty > 0 && (
+                      <Badge className="bg-background/80 text-foreground border-0 text-[8px] px-1 py-0">
+                        {product.computed_stock_qty} {product.unit}
+                      </Badge>
+                    )}
                   </div>
                 </div>
 
@@ -475,6 +481,9 @@ export function ProductsPage({ onAddToCart }: ProductsPageProps) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Voice Assistant - Admin Only */}
+      {isAdmin && <VoiceAssistant />}
     </div>
   );
 }
