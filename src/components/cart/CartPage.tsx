@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useCart } from '@/hooks/useCart';
 import { useLanguage } from '@/hooks/useLanguage';
 import { formatINR, generateOrderWhatsAppLink, openWhatsApp } from '@/lib/whatsapp';
+import { useUPIQRCode } from '@/components/settings/UPIQRUpload';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -26,12 +27,14 @@ import {
   Banknote,
   Smartphone,
   CreditCard,
+  Image,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
 export function CartPage() {
   const { items, updateQuantity, removeItem, clearCart, totalAmount } = useCart();
   const { t } = useLanguage();
+  const { data: upiQRUrl } = useUPIQRCode();
   const [customerName, setCustomerName] = useState('');
   const [address, setAddress] = useState('');
   const [paymentMode, setPaymentMode] = useState<'cash' | 'upi' | 'bank'>('cash');
@@ -305,14 +308,22 @@ export function CartPage() {
               </DialogTitle>
             </DialogHeader>
             <div className="flex flex-col items-center py-6">
-              <div className="w-48 h-48 bg-muted rounded-lg flex items-center justify-center border-2 border-dashed">
-                <div className="text-center p-4">
-                  <QrCode className="h-12 w-12 mx-auto text-muted-foreground mb-2" />
-                  <p className="text-xs text-muted-foreground">
-                    {t('UPI QR code will appear here', 'यहां UPI QR कोड दिखाई देगा')}
-                  </p>
+              {upiQRUrl ? (
+                <img 
+                  src={upiQRUrl} 
+                  alt="UPI QR Code" 
+                  className="w-48 h-48 rounded-lg border shadow-sm object-contain"
+                />
+              ) : (
+                <div className="w-48 h-48 bg-muted rounded-lg flex items-center justify-center border-2 border-dashed">
+                  <div className="text-center p-4">
+                    <Image className="h-12 w-12 mx-auto text-muted-foreground mb-2" />
+                    <p className="text-xs text-muted-foreground">
+                      {t('No QR code uploaded', 'कोई QR कोड अपलोड नहीं')}
+                    </p>
+                  </div>
                 </div>
-              </div>
+              )}
               <p className="mt-4 text-lg font-bold text-primary">{formatINR(totalAmount)}</p>
               <p className="text-sm text-muted-foreground">Geeta Traders</p>
             </div>
