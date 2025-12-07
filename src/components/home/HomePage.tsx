@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { LanguageToggle } from '@/components/layout/LanguageToggle';
 import { ThemeSwitcher } from '@/components/layout/ThemeSwitcher';
-import { VoiceAssistant } from '@/components/voice/VoiceAssistant';
+import { EnhancedVoiceAssistant } from '@/components/voice/EnhancedVoiceAssistant';
 import { 
   Share2, 
   TrendingUp, 
@@ -222,7 +222,7 @@ export function HomePage() {
       </div>
 
       {/* Voice Assistant - Admin Only */}
-      {isAdmin && <VoiceAssistant />}
+      {isAdmin && <EnhancedVoiceAssistant />}
     </div>
   );
 }

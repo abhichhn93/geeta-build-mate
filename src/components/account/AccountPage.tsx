@@ -3,9 +3,10 @@ import { useLanguage } from '@/hooks/useLanguage';
 import { useTheme } from '@/hooks/useTheme';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, LogOut, User, Phone, Mail, Shield, Check } from 'lucide-react';
+import { ArrowLeft, LogOut, User, Phone, Mail, Shield, Check, TrendingUp } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
+import { UPIQRUpload } from '@/components/settings/UPIQRUpload';
 
 export function AccountPage() {
   const { user, role, isAdmin, signOut } = useAuth();
@@ -118,6 +119,9 @@ export function AccountPage() {
           </Card>
         )}
 
+        {/* UPI QR Upload - Admin only */}
+        {isAdmin && <UPIQRUpload />}
+
         {/* Quick Links */}
         <Card>
           <CardHeader className="pb-3">
@@ -144,6 +148,17 @@ export function AccountPage() {
                 <Link to="/billing">
                   <Button variant="outline" size="sm" className="w-full justify-start text-xs">
                     🧾 {t('Quick Bill', 'क्विक बिल')}
+                  </Button>
+                </Link>
+                <Link to="/rates">
+                  <Button variant="outline" size="sm" className="w-full justify-start text-xs">
+                    <TrendingUp className="mr-1 h-3 w-3" />
+                    {t('Manage Rates', 'रेट मैनेज')}
+                  </Button>
+                </Link>
+                <Link to="/customers">
+                  <Button variant="outline" size="sm" className="w-full justify-start text-xs">
+                    👥 {t('Customers', 'ग्राहक')}
                   </Button>
                 </Link>
               </>
