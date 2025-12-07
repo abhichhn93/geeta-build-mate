@@ -8,6 +8,24 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { z } from 'zod';
+
+// Validation schemas
+const loginSchema = z.object({
+  email: z.string().trim().email('Please enter a valid email address'),
+  password: z.string().min(6, 'Password must be at least 6 characters'),
+});
+
+const signupSchema = z.object({
+  email: z.string().trim().email('Please enter a valid email address'),
+  password: z
+    .string()
+    .min(8, 'Password must be at least 8 characters')
+    .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
+    .regex(/[0-9]/, 'Password must contain at least one number'),
+  fullName: z.string().trim().min(2, 'Name must be at least 2 characters').max(100, 'Name is too long'),
+  phone: z.string().optional(),
+});
 
 export function AuthPage() {
   const navigate = useNavigate();
@@ -29,7 +47,20 @@ export function AuthPage() {
     const email = formData.get('email') as string;
     const password = formData.get('password') as string;
 
-    const { error } = await signIn(email, password);
+    // Validate inputs
+    const result = loginSchema.safeParse({ email, password });
+    if (!result.success) {
+      const firstError = result.error.errors[0];
+      toast({
+        title: 'Validation Error',
+        description: firstError.message,
+        variant: 'destructive',
+      });
+      setIsLoading(false);
+      return;
+    }
+
+    const { error } = await signIn(result.data.email, result.data.password);
 
     if (error) {
       toast({
@@ -58,17 +89,25 @@ export function AuthPage() {
     const fullName = formData.get('fullName') as string;
     const phone = formData.get('phone') as string;
 
-    if (password.length < 6) {
+    // Validate inputs with Zod
+    const result = signupSchema.safeParse({ email, password, fullName, phone: phone || undefined });
+    if (!result.success) {
+      const firstError = result.error.errors[0];
       toast({
-        title: 'Weak Password',
-        description: 'Password must be at least 6 characters',
+        title: 'Validation Error',
+        description: firstError.message,
         variant: 'destructive',
       });
       setIsLoading(false);
       return;
     }
 
-    const { error } = await signUp(email, password, fullName, phone);
+    const { error } = await signUp(
+      result.data.email,
+      result.data.password,
+      result.data.fullName,
+      result.data.phone || ''
+    );
 
     if (error) {
       toast({
@@ -180,9 +219,9 @@ export function AuthPage() {
                     id="signup-password"
                     name="password"
                     type="password"
-                    placeholder="At least 6 characters"
+                    placeholder="8+ chars, uppercase, number"
                     required
-                    minLength={6}
+                    minLength={8}
                     disabled={isLoading}
                   />
                 </div>
