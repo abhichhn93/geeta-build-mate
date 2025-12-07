@@ -235,42 +235,48 @@ export function EnhancedVoiceAssistant({ className }: EnhancedVoiceAssistantProp
 
   return (
     <>
-      {/* Floating Mic Button */}
-      <Button
-        size="lg"
-        className={`fixed bottom-20 right-4 z-50 h-14 w-14 rounded-full shadow-lg ${
-          isListening 
-            ? 'bg-destructive hover:bg-destructive/90 animate-pulse' 
-            : 'bg-primary hover:bg-primary/90'
-        } ${className}`}
-        onClick={isListening ? () => setIsListening(false) : startListening}
-      >
-        {isListening ? (
-          <MicOff className="h-6 w-6" />
-        ) : (
-          <Mic className="h-6 w-6" />
-        )}
-      </Button>
+      {/* Floating Mic Button - positioned within max-w-lg container */}
+      <div className="fixed bottom-20 left-1/2 z-50 w-full max-w-lg -translate-x-1/2 pointer-events-none px-4">
+        <div className="relative w-full">
+          <Button
+            size="lg"
+            className={`absolute right-0 bottom-0 h-14 w-14 rounded-full shadow-lg pointer-events-auto ${
+              isListening 
+                ? 'bg-destructive hover:bg-destructive/90 animate-pulse' 
+                : 'bg-primary hover:bg-primary/90'
+            } ${className}`}
+            onClick={isListening ? () => setIsListening(false) : startListening}
+          >
+            {isListening ? (
+              <MicOff className="h-6 w-6" />
+            ) : (
+              <Mic className="h-6 w-6" />
+            )}
+          </Button>
+        </div>
+      </div>
 
-      {/* Listening Indicator */}
+      {/* Listening Indicator - positioned within max-w-lg container */}
       {isListening && (
-        <div className="fixed bottom-36 right-4 z-50">
-          <Card className="w-48 shadow-lg animate-in slide-in-from-right">
-            <CardContent className="p-3">
-              <div className="flex items-center gap-2">
-                <div className="relative">
-                  <Volume2 className="h-5 w-5 text-primary animate-pulse" />
-                  <span className="absolute -top-1 -right-1 flex h-2 w-2">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
+        <div className="fixed bottom-36 left-1/2 z-50 w-full max-w-lg -translate-x-1/2 pointer-events-none px-4">
+          <div className="relative w-full flex justify-end">
+            <Card className="w-48 shadow-lg animate-in slide-in-from-right pointer-events-auto">
+              <CardContent className="p-3">
+                <div className="flex items-center gap-2">
+                  <div className="relative">
+                    <Volume2 className="h-5 w-5 text-primary animate-pulse" />
+                    <span className="absolute -top-1 -right-1 flex h-2 w-2">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
+                    </span>
+                  </div>
+                  <span className="text-sm font-medium">
+                    {t('Listening...', 'सुन रहा हूँ...')}
                   </span>
                 </div>
-                <span className="text-sm font-medium">
-                  {t('Listening...', 'सुन रहा हूँ...')}
-                </span>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          </div>
         </div>
       )}
 
