@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useCart } from '@/hooks/useCart';
 import { useLanguage } from '@/hooks/useLanguage';
@@ -6,7 +7,13 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useState } from 'react';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import {
   ArrowLeft,
   Plus,
@@ -15,6 +22,10 @@ import {
   ShoppingCart,
   MessageCircle,
   Package,
+  QrCode,
+  Banknote,
+  Smartphone,
+  CreditCard,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -23,6 +34,8 @@ export function CartPage() {
   const { t } = useLanguage();
   const [customerName, setCustomerName] = useState('');
   const [address, setAddress] = useState('');
+  const [paymentMode, setPaymentMode] = useState<'cash' | 'upi' | 'bank'>('cash');
+  const [showQRDialog, setShowQRDialog] = useState(false);
 
   const handleWhatsAppOrder = () => {
     if (!customerName.trim()) {
@@ -230,8 +243,81 @@ export function CartPage() {
                 className="mt-1"
               />
             </div>
+
+            {/* Payment Mode */}
+            <div className="pt-2">
+              <Label className="text-xs">{t('Payment Mode', 'भुगतान का तरीका')}</Label>
+              <RadioGroup
+                value={paymentMode}
+                onValueChange={(v) => setPaymentMode(v as 'cash' | 'upi' | 'bank')}
+                className="mt-2 flex gap-2"
+              >
+                <div 
+                  className="flex items-center space-x-2 border rounded-lg p-2 flex-1 cursor-pointer hover:bg-accent/50"
+                  onClick={() => setPaymentMode('cash')}
+                >
+                  <RadioGroupItem value="cash" id="cart-cash" />
+                  <Label htmlFor="cart-cash" className="flex items-center gap-1 cursor-pointer text-xs">
+                    <Banknote className="h-3 w-3" /> {t('Cash', 'नकद')}
+                  </Label>
+                </div>
+                <div 
+                  className="flex items-center space-x-2 border rounded-lg p-2 flex-1 cursor-pointer hover:bg-accent/50"
+                  onClick={() => setPaymentMode('upi')}
+                >
+                  <RadioGroupItem value="upi" id="cart-upi" />
+                  <Label htmlFor="cart-upi" className="flex items-center gap-1 cursor-pointer text-xs">
+                    <Smartphone className="h-3 w-3" /> UPI
+                  </Label>
+                </div>
+                <div 
+                  className="flex items-center space-x-2 border rounded-lg p-2 flex-1 cursor-pointer hover:bg-accent/50"
+                  onClick={() => setPaymentMode('bank')}
+                >
+                  <RadioGroupItem value="bank" id="cart-bank" />
+                  <Label htmlFor="cart-bank" className="flex items-center gap-1 cursor-pointer text-xs">
+                    <CreditCard className="h-3 w-3" /> {t('Bank', 'बैंक')}
+                  </Label>
+                </div>
+              </RadioGroup>
+
+              {/* UPI QR Button */}
+              {paymentMode === 'upi' && (
+                <Button
+                  variant="outline"
+                  className="w-full mt-3"
+                  onClick={() => setShowQRDialog(true)}
+                >
+                  <QrCode className="mr-2 h-4 w-4" />
+                  {t('Show UPI QR Code', 'UPI QR कोड दिखाएं')}
+                </Button>
+              )}
+            </div>
           </CardContent>
         </Card>
+
+        {/* UPI QR Dialog */}
+        <Dialog open={showQRDialog} onOpenChange={setShowQRDialog}>
+          <DialogContent className="max-w-sm">
+            <DialogHeader>
+              <DialogTitle className="text-center">
+                {t('Scan to Pay', 'भुगतान के लिए स्कैन करें')}
+              </DialogTitle>
+            </DialogHeader>
+            <div className="flex flex-col items-center py-6">
+              <div className="w-48 h-48 bg-muted rounded-lg flex items-center justify-center border-2 border-dashed">
+                <div className="text-center p-4">
+                  <QrCode className="h-12 w-12 mx-auto text-muted-foreground mb-2" />
+                  <p className="text-xs text-muted-foreground">
+                    {t('UPI QR code will appear here', 'यहां UPI QR कोड दिखाई देगा')}
+                  </p>
+                </div>
+              </div>
+              <p className="mt-4 text-lg font-bold text-primary">{formatINR(totalAmount)}</p>
+              <p className="text-sm text-muted-foreground">Geeta Traders</p>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
 
       {/* Fixed Bottom Bar */}
