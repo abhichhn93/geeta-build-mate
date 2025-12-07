@@ -22,6 +22,7 @@ import {
   Wrench,
   Package
 } from 'lucide-react';
+import geetaTradersLogo from '@/assets/geeta-traders-logo.png';
 import { Link } from 'react-router-dom';
 import { generateRatesWhatsAppLink, openWhatsApp } from '@/lib/whatsapp';
 
@@ -59,9 +60,11 @@ export function HomePage() {
       {/* Header */}
       <header className="sticky top-0 z-40 border-b bg-card px-4 py-3 shadow-sm">
         <div className="mx-auto flex max-w-lg items-center justify-between">
-          <h1 className="text-lg font-bold text-foreground">
-            {t('Geeta Traders', 'गीता ट्रेडर्स')}
-          </h1>
+          <img 
+            src={geetaTradersLogo} 
+            alt="Geeta Traders" 
+            className="h-8 w-auto object-contain"
+          />
           <div className="flex items-center gap-2">
             <ThemeSwitcher />
             <LanguageToggle />
