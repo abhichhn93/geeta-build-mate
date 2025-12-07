@@ -20,8 +20,7 @@ import {
   Square,
   Circle,
   Wrench,
-  Package,
-  MapPin
+  Package
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { generateRatesWhatsAppLink, openWhatsApp } from '@/lib/whatsapp';
@@ -60,15 +59,9 @@ export function HomePage() {
       {/* Header */}
       <header className="sticky top-0 z-40 border-b bg-card px-4 py-3 shadow-sm">
         <div className="mx-auto flex max-w-lg items-center justify-between">
-          <div>
-            <h1 className="text-lg font-bold text-foreground">
-              {t('Geeta Traders', 'गीता ट्रेडर्स')}
-            </h1>
-            <p className="flex items-center gap-1 text-[10px] text-muted-foreground">
-              <MapPin className="h-3 w-3" />
-              Mohammadabad Gohna, Mau
-            </p>
-          </div>
+          <h1 className="text-lg font-bold text-foreground">
+            {t('Geeta Traders', 'गीता ट्रेडर्स')}
+          </h1>
           <div className="flex items-center gap-2">
             <ThemeSwitcher />
             <LanguageToggle />
@@ -147,9 +140,11 @@ export function HomePage() {
                       {cementRates.slice(0, 4).map((rate) => (
                         <div
                           key={rate.id}
-                          className="flex items-center justify-between rounded-md border bg-card px-2 py-1.5 text-sm"
+                          className="flex items-center justify-between rounded-md border bg-card px-2 py-1.5"
                         >
-                          <span className="text-xs">{rate.brand}</span>
+                          <span className="text-[10px] text-muted-foreground truncate max-w-[60%]">
+                            {rate.brand}
+                          </span>
                           <span className="font-semibold text-primary text-xs">
                             {formatINR(rate.price)}
                           </span>
