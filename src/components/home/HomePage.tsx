@@ -221,8 +221,8 @@ export function HomePage() {
         )}
       </div>
 
-      {/* Voice Assistant - Admin Only */}
-      {isAdmin && <EnhancedVoiceAssistant />}
+      {/* Voice Assistant - Available for all logged-in users */}
+      {user && <EnhancedVoiceAssistant />}
     </div>
   );
 }
