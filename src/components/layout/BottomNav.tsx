@@ -1,5 +1,5 @@
 import { NavLink, useLocation } from 'react-router-dom';
-import { Home, Package, ShoppingCart, ClipboardList, User, Settings } from 'lucide-react';
+import { Home, Package, ShoppingCart, ClipboardList, User, Users } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useLanguage } from '@/hooks/useLanguage';
 import { useCart } from '@/hooks/useCart';
@@ -16,9 +16,9 @@ const customerNavItems = [
 const adminNavItems = [
   { to: '/', icon: Home, label: 'Dashboard', labelHi: 'डैशबोर्ड' },
   { to: '/products', icon: Package, label: 'Products', labelHi: 'प्रोडक्ट्स' },
-  { to: '/billing', icon: ShoppingCart, label: 'Billing', labelHi: 'बिलिंग' },
+  { to: '/customers', icon: Users, label: 'Customers', labelHi: 'ग्राहक' },
   { to: '/orders', icon: ClipboardList, label: 'Orders', labelHi: 'ऑर्डर्स' },
-  { to: '/admin', icon: Settings, label: 'Admin', labelHi: 'एडमिन' },
+  { to: '/billing', icon: ShoppingCart, label: 'Billing', labelHi: 'बिलिंग' },
 ];
 
 export function BottomNav() {

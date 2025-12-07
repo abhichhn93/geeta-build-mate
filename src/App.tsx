@@ -15,6 +15,7 @@ import { AuthPage } from "@/components/auth/AuthPage";
 import { AccountPage } from "@/components/account/AccountPage";
 import { OrdersPage } from "@/components/orders/OrdersPage";
 import { CartPage } from "@/components/cart/CartPage";
+import { CustomersPage } from "@/components/customers/CustomersPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -38,7 +39,7 @@ const App = () => (
                   <Route path="/cart" element={<AppLayout><CartPage /></AppLayout>} />
                   <Route path="/orders" element={<AppLayout><OrdersPage /></AppLayout>} />
                   <Route path="/billing" element={<AppLayout><div className="p-4 text-center text-muted-foreground">Quick Billing coming soon</div></AppLayout>} />
-                  <Route path="/admin" element={<AppLayout><div className="p-4 text-center text-muted-foreground">Admin Panel coming soon</div></AppLayout>} />
+                  <Route path="/customers" element={<AppLayout><CustomersPage /></AppLayout>} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </BrowserRouter>
