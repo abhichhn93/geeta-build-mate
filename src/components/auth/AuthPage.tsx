@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -156,7 +157,42 @@ export function AuthPage() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="login-password">Password / पासवर्ड</Label>
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="login-password">Password / पासवर्ड</Label>
+                    <Button
+                      type="button"
+                      variant="link"
+                      className="h-auto p-0 text-xs text-muted-foreground"
+                      onClick={async () => {
+                        const email = (document.getElementById('login-email') as HTMLInputElement)?.value;
+                        if (!email || !email.includes('@')) {
+                          toast({
+                            title: 'Enter Email First',
+                            description: 'Please enter your email address above',
+                            variant: 'destructive',
+                          });
+                          return;
+                        }
+                        const { error } = await supabase.auth.resetPasswordForEmail(email, {
+                          redirectTo: `${window.location.origin}/auth`,
+                        });
+                        if (error) {
+                          toast({
+                            title: 'Error',
+                            description: error.message,
+                            variant: 'destructive',
+                          });
+                        } else {
+                          toast({
+                            title: 'Reset Link Sent! / लिंक भेजा गया!',
+                            description: 'Check your email for password reset link',
+                          });
+                        }
+                      }}
+                    >
+                      Forgot Password?
+                    </Button>
+                  </div>
                   <Input
                     id="login-password"
                     name="password"
