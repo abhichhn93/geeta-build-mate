@@ -235,24 +235,29 @@ export function EnhancedVoiceAssistant({ className }: EnhancedVoiceAssistantProp
 
   return (
     <>
-      {/* Floating Mic Button - positioned within max-w-lg container */}
+      {/* Floating Mic Button with Label - positioned within max-w-lg container */}
       <div className="fixed bottom-20 left-1/2 z-50 w-full max-w-lg -translate-x-1/2 pointer-events-none px-4">
-        <div className="relative w-full">
-          <Button
-            size="lg"
-            className={`absolute right-0 bottom-0 h-14 w-14 rounded-full shadow-lg pointer-events-auto ${
-              isListening 
-                ? 'bg-destructive hover:bg-destructive/90 animate-pulse' 
-                : 'bg-primary hover:bg-primary/90'
-            } ${className}`}
-            onClick={isListening ? () => setIsListening(false) : startListening}
-          >
-            {isListening ? (
-              <MicOff className="h-6 w-6" />
-            ) : (
-              <Mic className="h-6 w-6" />
-            )}
-          </Button>
+        <div className="relative w-full flex justify-end pr-2">
+          <div className="flex items-center gap-2 pointer-events-auto">
+            <span className="rounded-full bg-card px-3 py-1.5 text-xs font-medium text-foreground shadow-md border">
+              {t('Talk to AI', 'AI से बात करें')}
+            </span>
+            <Button
+              size="lg"
+              className={`h-12 w-12 rounded-full shadow-lg ${
+                isListening 
+                  ? 'bg-destructive hover:bg-destructive/90 animate-pulse' 
+                  : 'bg-primary hover:bg-primary/90'
+              } ${className}`}
+              onClick={isListening ? () => setIsListening(false) : startListening}
+            >
+              {isListening ? (
+                <MicOff className="h-5 w-5" />
+              ) : (
+                <Mic className="h-5 w-5" />
+              )}
+            </Button>
+          </div>
         </div>
       </div>
 
