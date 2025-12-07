@@ -58,14 +58,14 @@ export function HomePage() {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="sticky top-0 z-40 border-b bg-card px-4 py-3 shadow-sm">
-        <div className="mx-auto flex max-w-lg items-center justify-between">
+      <header className="sticky top-0 z-40 border-b bg-card px-4 py-2 shadow-sm">
+        <div className="mx-auto flex max-w-lg items-center justify-between gap-2">
           <img 
             src={geetaTradersLogo} 
             alt="Geeta Traders" 
-            className="h-12 w-auto object-contain"
+            className="h-14 max-w-[65%] object-contain object-left"
           />
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 shrink-0">
             <ThemeSwitcher />
             <LanguageToggle />
           </div>
