@@ -235,25 +235,23 @@ export function EnhancedVoiceAssistant({ className }: EnhancedVoiceAssistantProp
 
   return (
     <>
-      {/* Floating Mic Button - positioned within max-w-lg container */}
+      {/* Floating Mic Button - Modern FAB style */}
       <div className="fixed bottom-20 left-1/2 z-50 w-full max-w-lg -translate-x-1/2 pointer-events-none px-4">
         <div className="relative w-full flex justify-end pr-2">
-          <Button
-            size="lg"
-            variant="outline"
-            className={`h-12 w-12 rounded-full shadow-lg pointer-events-auto ${
+          <button
+            className={`pointer-events-auto h-14 w-14 rounded-2xl shadow-xl transition-all duration-300 flex items-center justify-center ${
               isListening 
-                ? 'bg-destructive/10 border-destructive text-destructive hover:bg-destructive/20 animate-pulse' 
-                : 'bg-background/80 backdrop-blur-sm border-2 border-primary text-primary hover:bg-primary/10'
+                ? 'bg-gradient-to-br from-red-500 to-red-600 text-white animate-pulse shadow-red-500/30' 
+                : 'bg-gradient-to-br from-emerald-500 to-emerald-600 text-white shadow-emerald-500/30 hover:shadow-emerald-500/50 hover:scale-105'
             } ${className}`}
             onClick={isListening ? () => setIsListening(false) : startListening}
           >
             {isListening ? (
-              <MicOff className="h-5 w-5" />
+              <MicOff className="h-6 w-6" />
             ) : (
-              <Mic className="h-5 w-5" />
+              <Mic className="h-6 w-6" />
             )}
-          </Button>
+          </button>
         </div>
       </div>
 
