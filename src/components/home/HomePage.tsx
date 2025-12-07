@@ -63,7 +63,7 @@ export function HomePage() {
           <img 
             src={geetaTradersLogo} 
             alt="Geeta Traders" 
-            className="h-14 max-w-[65%] object-contain object-left"
+            className="h-16 max-w-[65%] object-contain object-left"
           />
           <div className="flex items-center gap-1 shrink-0">
             <ThemeSwitcher />
