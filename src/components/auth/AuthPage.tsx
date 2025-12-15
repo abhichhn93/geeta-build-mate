@@ -28,21 +28,62 @@ const signupSchema = z.object({
   phone: z.string().optional(),
 });
 
+const setPasswordSchema = z
+  .object({
+    password: z
+      .string()
+      .min(8, 'Password must be at least 8 characters')
+      .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
+      .regex(/[0-9]/, 'Password must contain at least one number'),
+    confirmPassword: z.string(),
+  })
+  .refine((val) => val.password === val.confirmPassword, {
+    message: 'Passwords do not match',
+    path: ['confirmPassword'],
+  });
+
+const normalizeEmail = (email: string) => email.trim().toLowerCase();
+
+
 export function AuthPage() {
   const navigate = useNavigate();
   const { signIn, signUp, user } = useAuth();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const [isRecoveryMode, setIsRecoveryMode] = useState(false);
 
-  // Redirect if already logged in - use useEffect to avoid setState during render
   React.useEffect(() => {
-    if (user) {
+    document.title = isRecoveryMode ? 'Reset Password | Geeta Traders' : 'Login | Geeta Traders';
+  }, [isRecoveryMode]);
+
+  React.useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const hash = window.location.hash || '';
+
+    if (params.get('mode') === 'recovery' || hash.includes('type=recovery')) {
+      setIsRecoveryMode(true);
+    }
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'PASSWORD_RECOVERY') {
+        setIsRecoveryMode(true);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  // Redirect if already logged in (but never during password recovery)
+  React.useEffect(() => {
+    if (user && !isRecoveryMode) {
       navigate('/');
     }
-  }, [user, navigate]);
+  }, [user, isRecoveryMode, navigate]);
 
   // Show nothing while redirecting
-  if (user) {
+  if (user && !isRecoveryMode) {
     return null;
   }
 
@@ -51,8 +92,8 @@ export function AuthPage() {
     setIsLoading(true);
 
     const formData = new FormData(e.currentTarget);
-    const email = formData.get('email') as string;
-    const password = formData.get('password') as string;
+    const email = normalizeEmail((formData.get('email') as string) || '');
+    const password = (formData.get('password') as string) || '';
 
     // Validate inputs
     const result = loginSchema.safeParse({ email, password });
@@ -70,14 +111,18 @@ export function AuthPage() {
     const { error } = await signIn(result.data.email, result.data.password);
 
     if (error) {
+      const msg = /invalid login credentials/i.test(error.message)
+        ? 'Wrong email or password. Use “Forgot Password” to reset it.'
+        : error.message;
+
       toast({
-        title: 'Login Failed / लॉगिन विफल',
-        description: error.message,
+        title: 'Login Failed',
+        description: msg,
         variant: 'destructive',
       });
     } else {
       toast({
-        title: 'Welcome! / स्वागत है!',
+        title: 'Welcome!',
         description: 'Login successful',
       });
       navigate('/');
@@ -91,10 +136,10 @@ export function AuthPage() {
     setIsLoading(true);
 
     const formData = new FormData(e.currentTarget);
-    const email = formData.get('email') as string;
-    const password = formData.get('password') as string;
-    const fullName = formData.get('fullName') as string;
-    const phone = formData.get('phone') as string;
+    const email = normalizeEmail((formData.get('email') as string) || '');
+    const password = (formData.get('password') as string) || '';
+    const fullName = ((formData.get('fullName') as string) || '').trim();
+    const phone = (formData.get('phone') as string) || '';
 
     // Validate inputs with Zod
     const result = signupSchema.safeParse({ email, password, fullName, phone: phone || undefined });
@@ -118,19 +163,161 @@ export function AuthPage() {
 
     if (error) {
       toast({
-        title: 'Signup Failed / साइनअप विफल',
+        title: 'Signup Failed',
         description: error.message,
         variant: 'destructive',
       });
     } else {
       toast({
-        title: 'Account Created! / खाता बनाया गया!',
-        description: 'You can now login',
+        title: 'Account Created!',
+        description: 'Please check your email to confirm, then login.',
       });
     }
 
     setIsLoading(false);
   };
+
+  const handleSetNewPassword = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setIsLoading(true);
+
+    const formData = new FormData(e.currentTarget);
+    const password = (formData.get('newPassword') as string) || '';
+    const confirmPassword = (formData.get('confirmPassword') as string) || '';
+
+    const result = setPasswordSchema.safeParse({ password, confirmPassword });
+    if (!result.success) {
+      const firstError = result.error.errors[0];
+      toast({
+        title: 'Validation Error',
+        description: firstError.message,
+        variant: 'destructive',
+      });
+      setIsLoading(false);
+      return;
+    }
+
+    const { error } = await supabase.auth.updateUser({ password: result.data.password });
+
+    if (error) {
+      toast({
+        title: 'Reset Failed',
+        description: error.message,
+        variant: 'destructive',
+      });
+    } else {
+      // Clean up URL params/hash so refresh doesn't stay in recovery mode
+      window.history.replaceState({}, document.title, '/auth');
+      toast({
+        title: 'Password Updated',
+        description: 'You can now use the new password to login.',
+      });
+      setIsRecoveryMode(false);
+    }
+
+    setIsLoading(false);
+  };
+
+  const handleSendLoginLink = async () => {
+    const emailInput = (document.getElementById('login-email') as HTMLInputElement | null)?.value || '';
+    const email = normalizeEmail(emailInput);
+
+    const emailCheck = z.string().email().safeParse(email);
+    if (!emailCheck.success) {
+      toast({
+        title: 'Enter a valid email',
+        description: 'Please enter your email address first.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setIsLoading(true);
+    const { error } = await supabase.auth.signInWithOtp({
+      email,
+      options: {
+        emailRedirectTo: `${window.location.origin}/`,
+      },
+    });
+
+    if (error) {
+      toast({
+        title: 'Could not send login link',
+        description: error.message,
+        variant: 'destructive',
+      });
+    } else {
+      toast({
+        title: 'Login link sent',
+        description: 'Open the email and click the link to sign in (no password needed).',
+      });
+    }
+
+    setIsLoading(false);
+  };
+
+  if (isRecoveryMode) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-primary/5 to-accent/5 p-4">
+        <h1 className="sr-only">Reset password</h1>
+        <Card className="w-full max-w-md">
+          <CardHeader className="text-center">
+            <CardTitle className="text-2xl">Set New Password</CardTitle>
+            <CardDescription>Open the reset link from your email, then set a new password here.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSetNewPassword} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="newPassword">New Password</Label>
+                <Input
+                  id="newPassword"
+                  name="newPassword"
+                  type="password"
+                  placeholder="8+ chars, uppercase, number"
+                  required
+                  minLength={8}
+                  disabled={isLoading}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="confirmPassword">Confirm Password</Label>
+                <Input
+                  id="confirmPassword"
+                  name="confirmPassword"
+                  type="password"
+                  placeholder="Repeat new password"
+                  required
+                  disabled={isLoading}
+                />
+              </div>
+              <Button type="submit" className="w-full" disabled={isLoading}>
+                {isLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Updating...
+                  </>
+                ) : (
+                  'Update Password'
+                )}
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full"
+                disabled={isLoading}
+                onClick={() => {
+                  window.history.replaceState({}, document.title, '/auth');
+                  setIsRecoveryMode(false);
+                }}
+              >
+                Back to Login
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-primary/5 to-accent/5 p-4">
