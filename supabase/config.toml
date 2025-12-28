@@ -1,1 +1,4 @@
 project_id = "nwxfaxywylrfnyokpuqa"
+
+[functions.ocr-bill-scanner]
+verify_jwt = false

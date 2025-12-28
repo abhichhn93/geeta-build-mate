@@ -21,7 +21,8 @@ import {
   Wrench,
   Settings,
   Triangle,
-  Package
+  Package,
+  ScanLine
 } from 'lucide-react';
 import geetaTradersLogo from '@/assets/geeta-traders-logo.png';
 import { Link } from 'react-router-dom';
@@ -280,6 +281,23 @@ export function HomePage() {
                 </Badge>
               </Link>
 
+              {/* Bill Scanner - Admin only */}
+              {isAdmin && (
+                <Link
+                  to="/bill-scanner"
+                  className="flex flex-col items-center gap-1.5 rounded-xl border-2 border-primary/30 bg-primary/5 p-2.5 text-center transition-all hover:border-primary hover:shadow-md"
+                >
+                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+                    <ScanLine className="h-5 w-5" />
+                  </div>
+                  <span className="text-[10px] font-medium leading-tight">
+                    {t('Bill OCR', 'बिल स्कैन')}
+                  </span>
+                  <Badge variant="secondary" className="text-[8px] px-1 py-0">
+                    {t('Admin', 'एडमिन')}
+                  </Badge>
+                </Link>
+              )}
               {/* Regular categories */}
               {categories?.map((category) => (
                 <Link
