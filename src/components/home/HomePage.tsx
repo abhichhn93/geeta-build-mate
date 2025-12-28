@@ -1,6 +1,6 @@
 import { useAuth } from '@/hooks/useAuth';
 import { useLanguage } from '@/hooks/useLanguage';
-import { useDailyRates } from '@/hooks/useDailyRates';
+import { useLatestRates } from '@/hooks/useDailyRates';
 import { useCategories } from '@/hooks/useProducts';
 import { formatINR } from '@/lib/whatsapp';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -15,44 +15,94 @@ import {
   Calculator,
   CircleDot,
   Box,
-  Link as LinkIcon,
-  Triangle,
-  Square,
-  Circle,
+  Cylinder,
+  LayoutGrid,
+  Sun,
   Wrench,
+  Settings,
+  Triangle,
   Package
 } from 'lucide-react';
 import geetaTradersLogo from '@/assets/geeta-traders-logo.png';
 import { Link } from 'react-router-dom';
 import { generateRatesWhatsAppLink, openWhatsApp } from '@/lib/whatsapp';
 
+// Category icon mapping for the 8 Geeta Traders categories
 const getCategoryIcon = (nameEn: string) => {
-  const iconMap: Record<string, React.ReactNode> = {
-    'TMT Sariya': <CircleDot className="h-5 w-5" />,
-    'Cement': <Box className="h-5 w-5" />,
-    'Binding Wire': <LinkIcon className="h-5 w-5" />,
-    'MS Angles': <Triangle className="h-5 w-5" />,
-    'MS Channels': <Square className="h-5 w-5" />,
-    'Stirrups': <Circle className="h-5 w-5" />,
-    'Fasteners': <Wrench className="h-5 w-5" />,
-  };
-  return iconMap[nameEn] || <Package className="h-5 w-5" />;
+  const name = nameEn.toLowerCase();
+  
+  if (name.includes('tmt') || name.includes('sariya')) {
+    return <CircleDot className="h-5 w-5" />;
+  }
+  if (name.includes('structural') || name.includes('angle') || name.includes('channel')) {
+    return <Triangle className="h-5 w-5" />;
+  }
+  if (name.includes('pipe') || name.includes('tube')) {
+    return <Cylinder className="h-5 w-5" />;
+  }
+  if (name.includes('cement')) {
+    return <Box className="h-5 w-5" />;
+  }
+  if (name.includes('sheet') || name.includes('roofing')) {
+    return <LayoutGrid className="h-5 w-5" />;
+  }
+  if (name.includes('solar') || name.includes('gi')) {
+    return <Sun className="h-5 w-5" />;
+  }
+  if (name.includes('hardware') || name.includes('consumable') || name.includes('wire')) {
+    return <Wrench className="h-5 w-5" />;
+  }
+  if (name.includes('service') || name.includes('ring')) {
+    return <Settings className="h-5 w-5" />;
+  }
+  
+  return <Package className="h-5 w-5" />;
 };
 
 export function HomePage() {
   const { user, isAdmin } = useAuth();
   const { language, t } = useLanguage();
-  const { data: rates, isLoading: ratesLoading } = useDailyRates();
+  const { data: ratesData, isLoading: ratesLoading } = useLatestRates();
   const { data: categories } = useCategories();
 
-  const sariyaRates = rates?.filter(r => r.category.toLowerCase() === 'sariya') || [];
-  const cementRates = rates?.filter(r => r.category.toLowerCase() === 'cement') || [];
+  const rates = ratesData?.rates || [];
+  const rateDate = ratesData?.date;
+
+  // Filter rates by category (supporting both old "sariya" and new "tmt" naming)
+  const tmtRates = rates.filter(r => 
+    r.category.toLowerCase() === 'sariya' || 
+    r.category.toLowerCase() === 'tmt' ||
+    r.category.toLowerCase().includes('tmt')
+  );
+  const cementRates = rates.filter(r => r.category.toLowerCase() === 'cement');
 
   const handleShareRates = () => {
-    if (rates && rates.length > 0) {
+    if (rates.length > 0) {
       const link = generateRatesWhatsAppLink(rates);
       openWhatsApp(link);
     }
+  };
+
+  // Format the rate date for display
+  const formatRateDate = (dateStr: string | null) => {
+    if (!dateStr) return '';
+    const date = new Date(dateStr);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const rateDay = new Date(dateStr);
+    rateDay.setHours(0, 0, 0, 0);
+    
+    const isToday = rateDay.getTime() === today.getTime();
+    
+    if (isToday) {
+      return t("Today's Rate", 'आज का रेट');
+    }
+    
+    return date.toLocaleDateString(language === 'hi' ? 'hi-IN' : 'en-IN', {
+      weekday: 'short',
+      day: 'numeric',
+      month: 'short',
+    });
   };
 
   return (
@@ -73,29 +123,31 @@ export function HomePage() {
       </header>
 
       <div className="mx-auto max-w-lg space-y-4 p-4">
-        {/* Today's Rate Section */}
-        <Card className="overflow-hidden shadow-sm">
-          <CardHeader className="border-b bg-muted/30 pb-3">
+        {/* Rate Board - Prominent Design */}
+        <Card className="overflow-hidden shadow-md border-primary/20">
+          <CardHeader className="border-b bg-gradient-to-r from-primary/10 to-primary/5 pb-3">
             <div className="flex items-center justify-between">
               <div>
                 <CardTitle className="flex items-center gap-2 text-base">
                   <TrendingUp className="h-4 w-4 text-primary" />
-                  {t("Today's Rate", 'आज का रेट')}
+                  {rateDate ? formatRateDate(rateDate) : t("Today's Rate", 'आज का रेट')}
                 </CardTitle>
-                <p className="mt-0.5 text-[10px] text-muted-foreground">
-                  {new Date().toLocaleDateString(language === 'hi' ? 'hi-IN' : 'en-IN', {
-                    weekday: 'short',
-                    day: 'numeric',
-                    month: 'short',
-                  })}
-                </p>
+                {rateDate && (
+                  <p className="mt-0.5 text-[10px] text-muted-foreground">
+                    {t('Latest prices', 'नवीनतम भाव')} • {new Date(rateDate).toLocaleDateString(language === 'hi' ? 'hi-IN' : 'en-IN', {
+                      day: 'numeric',
+                      month: 'short',
+                      year: 'numeric',
+                    })}
+                  </p>
+                )}
               </div>
               <Button
                 size="sm"
                 variant="outline"
-                className="h-8 gap-1 text-xs"
+                className="h-8 gap-1 text-xs border-primary/30 hover:bg-primary/10"
                 onClick={handleShareRates}
-                disabled={!rates?.length}
+                disabled={!rates.length}
               >
                 <Share2 className="h-3.5 w-3.5" />
                 {t('Share', 'शेयर')}
@@ -109,24 +161,38 @@ export function HomePage() {
                   <div key={i} className="h-10 rounded-lg bg-muted" />
                 ))}
               </div>
-            ) : sariyaRates.length > 0 || cementRates.length > 0 ? (
-              <div className="space-y-3">
-                {sariyaRates.length > 0 && (
+            ) : tmtRates.length > 0 || cementRates.length > 0 ? (
+              <div className="space-y-4">
+                {/* TMT Rates */}
+                {tmtRates.length > 0 && (
                   <div>
-                    <Badge variant="secondary" className="mb-2 text-[10px]">
-                      {t('TMT', 'सरिया')}
-                    </Badge>
+                    <div className="flex items-center gap-2 mb-2">
+                      <CircleDot className="h-4 w-4 text-primary" />
+                      <span className="text-xs font-semibold text-foreground">
+                        {t('TMT Sariya', 'टीएमटी सरिया')}
+                      </span>
+                      <span className="text-[9px] text-muted-foreground">
+                        (₹/{t('kg', 'किग्रा')})
+                      </span>
+                    </div>
                     <div className="grid grid-cols-2 gap-1.5">
-                    {sariyaRates.slice(0, 6).map((rate) => (
+                      {tmtRates.slice(0, 8).map((rate) => (
                         <div
                           key={rate.id}
-                          className="flex items-center justify-between rounded-md border bg-card px-2 py-1.5"
+                          className="flex items-center justify-between rounded-lg border bg-gradient-to-r from-card to-muted/30 px-2.5 py-2"
                         >
-                          <span className="text-[10px] text-muted-foreground truncate max-w-[60%]">
-                            {rate.brand} {rate.size && `• ${rate.size}`}
-                          </span>
-                          <span className="font-semibold text-primary text-xs">
-                            {formatINR(rate.price)}
+                          <div className="flex flex-col min-w-0">
+                            <span className="text-[11px] font-medium text-foreground truncate">
+                              {rate.brand}
+                            </span>
+                            {rate.size && (
+                              <span className="text-[9px] text-muted-foreground">
+                                {rate.size}
+                              </span>
+                            )}
+                          </div>
+                          <span className="font-bold text-primary text-sm ml-2">
+                            ₹{rate.price}
                           </span>
                         </div>
                       ))}
@@ -134,32 +200,58 @@ export function HomePage() {
                   </div>
                 )}
 
+                {/* Cement Rates */}
                 {cementRates.length > 0 && (
                   <div>
-                    <Badge variant="secondary" className="mb-2 text-[10px]">
-                      {t('Cement', 'सीमेंट')}
-                    </Badge>
+                    <div className="flex items-center gap-2 mb-2">
+                      <Box className="h-4 w-4 text-primary" />
+                      <span className="text-xs font-semibold text-foreground">
+                        {t('Cement', 'सीमेंट')}
+                      </span>
+                      <span className="text-[9px] text-muted-foreground">
+                        (₹/{t('bag', 'बैग')})
+                      </span>
+                    </div>
                     <div className="grid grid-cols-2 gap-1.5">
-                      {cementRates.slice(0, 4).map((rate) => (
+                      {cementRates.slice(0, 6).map((rate) => (
                         <div
                           key={rate.id}
-                          className="flex items-center justify-between rounded-md border bg-card px-2 py-1.5"
+                          className="flex items-center justify-between rounded-lg border bg-gradient-to-r from-card to-muted/30 px-2.5 py-2"
                         >
-                          <span className="text-[10px] text-muted-foreground truncate max-w-[60%]">
+                          <span className="text-[11px] font-medium text-foreground truncate">
                             {rate.brand}
                           </span>
-                          <span className="font-semibold text-primary text-xs">
-                            {formatINR(rate.price)}
+                          <span className="font-bold text-primary text-sm ml-2">
+                            ₹{rate.price}
                           </span>
                         </div>
                       ))}
                     </div>
                   </div>
                 )}
+
+                {/* Link to full rates page */}
+                {isAdmin && (
+                  <Link to="/rates" className="block">
+                    <Button variant="outline" size="sm" className="w-full text-xs mt-2">
+                      {t('Manage Rates', 'रेट प्रबंधन')}
+                    </Button>
+                  </Link>
+                )}
               </div>
             ) : (
-              <div className="py-6 text-center text-muted-foreground text-sm">
-                {t('No rates available', 'रेट उपलब्ध नहीं')}
+              <div className="py-6 text-center">
+                <TrendingUp className="h-8 w-8 text-muted-foreground/40 mx-auto mb-2" />
+                <p className="text-sm text-muted-foreground">
+                  {t('No rates available', 'रेट उपलब्ध नहीं')}
+                </p>
+                {isAdmin && (
+                  <Link to="/rates">
+                    <Button variant="outline" size="sm" className="mt-3 text-xs">
+                      {t('Add Rates', 'रेट जोड़ें')}
+                    </Button>
+                  </Link>
+                )}
               </div>
             )}
           </CardContent>
