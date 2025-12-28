@@ -4,6 +4,7 @@ import { Tables, TablesInsert } from '@/integrations/supabase/types';
 
 export type DailyRate = Tables<'daily_rates'>;
 
+// Fetch rates for a specific date
 export function useDailyRates(date?: string) {
   const today = date || new Date().toISOString().split('T')[0];
   
@@ -21,6 +22,39 @@ export function useDailyRates(date?: string) {
       return data;
     },
     staleTime: 2 * 60 * 1000, // Cache for 2 minutes (rates change frequently)
+  });
+}
+
+// Fetch the latest available rates (for homepage Rate Board)
+export function useLatestRates() {
+  return useQuery({
+    queryKey: ['daily_rates', 'latest'],
+    queryFn: async () => {
+      // First get the most recent rate date
+      const { data: latestDate, error: dateError } = await supabase
+        .from('daily_rates')
+        .select('rate_date')
+        .order('rate_date', { ascending: false })
+        .limit(1)
+        .single();
+      
+      if (dateError || !latestDate) {
+        return { rates: [], date: null };
+      }
+
+      // Then fetch all rates for that date
+      const { data: rates, error } = await supabase
+        .from('daily_rates')
+        .select('*')
+        .eq('rate_date', latestDate.rate_date)
+        .order('category')
+        .order('brand')
+        .order('size');
+      
+      if (error) throw error;
+      return { rates: rates || [], date: latestDate.rate_date };
+    },
+    staleTime: 2 * 60 * 1000,
   });
 }
 
@@ -51,7 +85,7 @@ export function useUpdateDailyRate() {
         .eq('category', category)
         .eq('brand', brand)
         .eq('size', size || '')
-        .single();
+        .maybeSingle();
 
       if (existing) {
         const { data, error } = await supabase
