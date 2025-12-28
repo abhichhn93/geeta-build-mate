@@ -14,21 +14,11 @@ import {
 import { SlidersHorizontal, X } from 'lucide-react';
 import { Category, Brand } from '@/hooks/useProducts';
 import { useLanguage } from '@/hooks/useLanguage';
-
-// TMT sizes in mm
-const TMT_SIZES = ['6mm', '8mm', '10mm', '12mm', '16mm', '20mm', '25mm', '32mm'];
-// Cement sizes
-const CEMENT_SIZES = ['50kg bag'];
-// Binding wire sizes
-const WIRE_SIZES = ['18 gauge', '20 gauge', '22 gauge', '5kg bundle', '10kg bundle'];
-// General sizes for angles/channels
-const STEEL_SIZES = ['25x25mm', '40x40mm', '50x50mm', '75x75mm'];
-// Stock status options
-const STOCK_STATUS_OPTIONS = [
-  { value: 'in_stock', labelEn: 'In Stock', labelHi: 'स्टॉक में' },
-  { value: 'low_stock', labelEn: 'Low Stock', labelHi: 'कम स्टॉक' },
-  { value: 'out_of_stock', labelEn: 'Out of Stock', labelHi: 'स्टॉक खत्म' },
-];
+import { 
+  getSizesForCategory, 
+  STOCK_STATUS_OPTIONS,
+  getCategoryType,
+} from '@/lib/product-constants';
 
 export interface ProductFiltersState {
   categories: string[];
@@ -57,46 +47,56 @@ export function ProductFilters({
   const [isOpen, setIsOpen] = useState(false);
   const [localFilters, setLocalFilters] = useState<ProductFiltersState>(filters);
 
-  // Get relevant sizes based on selected categories
+  // Get relevant sizes based on selected categories (category-aware filtering)
   const availableSizes = useMemo(() => {
-    const selectedCategoryNames = categories
-      .filter((c) => localFilters.categories.includes(c.id))
-      .map((c) => c.name_en.toLowerCase());
+    const selectedCategories = categories.filter((c) => 
+      localFilters.categories.includes(c.id)
+    );
 
-    let sizes: string[] = [];
-
-    if (selectedCategoryNames.length === 0) {
-      // Show all sizes if no category selected
-      sizes = [...TMT_SIZES, ...CEMENT_SIZES, ...WIRE_SIZES, ...STEEL_SIZES];
-    } else {
-      if (selectedCategoryNames.some((n) => n.includes('tmt') || n.includes('sariya'))) {
-        sizes = [...sizes, ...TMT_SIZES];
-      }
-      if (selectedCategoryNames.some((n) => n.includes('cement'))) {
-        sizes = [...sizes, ...CEMENT_SIZES];
-      }
-      if (selectedCategoryNames.some((n) => n.includes('wire') || n.includes('binding'))) {
-        sizes = [...sizes, ...WIRE_SIZES];
-      }
-      if (
-        selectedCategoryNames.some(
-          (n) => n.includes('angle') || n.includes('channel') || n.includes('stirrup')
-        )
-      ) {
-        sizes = [...sizes, ...STEEL_SIZES];
-      }
+    if (selectedCategories.length === 0) {
+      // When no category selected, gather sizes from all categories
+      const allSizes = new Set<string>();
+      categories.forEach(cat => {
+        getSizesForCategory(cat.name_en).forEach(size => allSizes.add(size));
+      });
+      return Array.from(allSizes);
     }
 
-    return [...new Set(sizes)];
+    // Get sizes for selected categories only
+    const sizes = new Set<string>();
+    selectedCategories.forEach(cat => {
+      getSizesForCategory(cat.name_en).forEach(size => sizes.add(size));
+    });
+    
+    return Array.from(sizes);
   }, [categories, localFilters.categories]);
 
+  // Filter brands by selected categories
+  const filteredBrands = useMemo(() => {
+    if (localFilters.categories.length === 0) {
+      return brands;
+    }
+    return brands.filter(brand => 
+      brand.category_id && localFilters.categories.includes(brand.category_id)
+    );
+  }, [brands, localFilters.categories]);
+
   const toggleCategory = (categoryId: string) => {
-    setLocalFilters((prev) => ({
-      ...prev,
-      categories: prev.categories.includes(categoryId)
+    setLocalFilters((prev) => {
+      const newCategories = prev.categories.includes(categoryId)
         ? prev.categories.filter((id) => id !== categoryId)
-        : [...prev.categories, categoryId],
-    }));
+        : [...prev.categories, categoryId];
+      
+      // Clear sizes and brands when category changes to avoid invalid selections
+      return {
+        ...prev,
+        categories: newCategories,
+        sizes: [], // Reset sizes when category changes
+        brands: prev.brands.filter(brandId => 
+          filteredBrands.some(b => b.id === brandId)
+        ),
+      };
+    });
   };
 
   const toggleBrand = (brandId: string) => {
@@ -157,6 +157,21 @@ export function ProductFilters({
     filters.stockStatus.length +
     (filters.priceRange[0] > 0 || filters.priceRange[1] < maxPrice ? 1 : 0);
 
+  // Get category type label for size section
+  const sizeLabel = useMemo(() => {
+    if (localFilters.categories.length === 1) {
+      const cat = categories.find(c => c.id === localFilters.categories[0]);
+      if (cat) {
+        const type = getCategoryType(cat.name_en);
+        if (type === 'TMT') return t('Diameter', 'व्यास');
+        if (type === 'PIPES') return t('Dimensions', 'आकार');
+        if (type === 'STRUCTURAL') return t('Section Size', 'सेक्शन साइज़');
+        if (type === 'ROOFING') return t('Type / Thickness', 'प्रकार / मोटाई');
+      }
+    }
+    return t('Size / Type', 'साइज़ / प्रकार');
+  }, [localFilters.categories, categories, t]);
+
   return (
     <Sheet open={isOpen} onOpenChange={setIsOpen}>
       <SheetTrigger asChild>
@@ -212,29 +227,31 @@ export function ProductFilters({
             </div>
           </div>
 
-          {/* Brand Filter */}
-          <div>
-            <Label className="mb-3 block text-sm font-medium">
-              {t('Brand', 'ब्रांड')}
-            </Label>
-            <div className="grid grid-cols-2 gap-2">
-              {brands.map((brand) => (
-                <div key={brand.id} className="flex items-center space-x-2">
-                  <Checkbox
-                    id={`brand-${brand.id}`}
-                    checked={localFilters.brands.includes(brand.id)}
-                    onCheckedChange={() => toggleBrand(brand.id)}
-                  />
-                  <label
-                    htmlFor={`brand-${brand.id}`}
-                    className="text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                  >
-                    {brand.name}
-                  </label>
-                </div>
-              ))}
+          {/* Brand Filter - filtered by selected category */}
+          {filteredBrands.length > 0 && (
+            <div>
+              <Label className="mb-3 block text-sm font-medium">
+                {t('Brand', 'ब्रांड')}
+              </Label>
+              <div className="grid grid-cols-2 gap-2">
+                {filteredBrands.map((brand) => (
+                  <div key={brand.id} className="flex items-center space-x-2">
+                    <Checkbox
+                      id={`brand-${brand.id}`}
+                      checked={localFilters.brands.includes(brand.id)}
+                      onCheckedChange={() => toggleBrand(brand.id)}
+                    />
+                    <label
+                      htmlFor={`brand-${brand.id}`}
+                      className="text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                    >
+                      {brand.name}
+                    </label>
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Stock Status Filter */}
           <div>
@@ -256,30 +273,32 @@ export function ProductFilters({
             </div>
           </div>
 
-          {/* Size Filter */}
-          <div>
-            <Label className="mb-3 block text-sm font-medium">
-              {t('Size', 'साइज़')}
-            </Label>
-            <div className="flex flex-wrap gap-2">
-              {availableSizes.map((size) => (
-                <Button
-                  key={size}
-                  variant={localFilters.sizes.includes(size) ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => toggleSize(size)}
-                  className="rounded-full text-xs"
-                >
-                  {size}
-                </Button>
-              ))}
+          {/* Size Filter - category-aware */}
+          {availableSizes.length > 0 && (
+            <div>
+              <Label className="mb-3 block text-sm font-medium">
+                {sizeLabel}
+              </Label>
+              <div className="flex flex-wrap gap-2">
+                {availableSizes.map((size) => (
+                  <Button
+                    key={size}
+                    variant={localFilters.sizes.includes(size) ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => toggleSize(size)}
+                    className="rounded-full text-xs"
+                  >
+                    {size}
+                  </Button>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Price Range */}
           <div>
             <Label className="mb-3 block text-sm font-medium">
-              {t('Price Range', 'कीमत सीमा')}
+              {t('Price Range', 'कीमत सीमा')} (₹/{t('unit', 'यूनिट')})
             </Label>
             <div className="px-2">
               <Slider
@@ -314,10 +333,3 @@ export function ProductFilters({
     </Sheet>
   );
 }
-
-// Helper to add/remove size options - just update the arrays at the top of this file:
-// - TMT_SIZES for TMT bar sizes
-// - CEMENT_SIZES for cement bag sizes
-// - WIRE_SIZES for binding wire sizes
-// - STEEL_SIZES for angles/channels sizes
-// No database changes needed.

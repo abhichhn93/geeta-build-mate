@@ -37,24 +37,53 @@ import {
   Box,
   Link as LinkIcon,
   Triangle,
-  Square,
-  Circle,
+  Cylinder,
+  LayoutGrid,
+  Sun,
   Wrench,
+  Settings,
   Package,
   PackagePlus
 } from 'lucide-react';
 
+// Category icon mapping for the 8 Geeta Traders categories
 const getCategoryIcon = (nameEn: string) => {
-  const iconMap: Record<string, React.ReactNode> = {
-    'TMT Sariya': <CircleDot className="h-8 w-8" />,
-    'Cement': <Box className="h-8 w-8" />,
-    'Binding Wire': <LinkIcon className="h-8 w-8" />,
-    'MS Angles': <Triangle className="h-8 w-8" />,
-    'MS Channels': <Square className="h-8 w-8" />,
-    'Stirrups': <Circle className="h-8 w-8" />,
-    'Fasteners': <Wrench className="h-8 w-8" />,
-  };
-  return iconMap[nameEn] || <Package className="h-8 w-8" />;
+  const name = nameEn.toLowerCase();
+  
+  // TMT Bars
+  if (name.includes('tmt') || name.includes('sariya')) {
+    return <CircleDot className="h-8 w-8" />;
+  }
+  // Structural Steel
+  if (name.includes('structural') || name.includes('angle') || name.includes('channel')) {
+    return <Triangle className="h-8 w-8" />;
+  }
+  // Pipes & Tubes
+  if (name.includes('pipe') || name.includes('tube')) {
+    return <Cylinder className="h-8 w-8" />;
+  }
+  // Cement
+  if (name.includes('cement')) {
+    return <Box className="h-8 w-8" />;
+  }
+  // Roofing & Sheets
+  if (name.includes('sheet') || name.includes('roofing')) {
+    return <LayoutGrid className="h-8 w-8" />;
+  }
+  // Solar & GI Structures
+  if (name.includes('solar') || name.includes('gi')) {
+    return <Sun className="h-8 w-8" />;
+  }
+  // Hardware & Consumables
+  if (name.includes('hardware') || name.includes('consumable') || name.includes('wire')) {
+    return <Wrench className="h-8 w-8" />;
+  }
+  // Services
+  if (name.includes('service') || name.includes('ring')) {
+    return <Settings className="h-8 w-8" />;
+  }
+  
+  return <Package className="h-8 w-8" />;
 };
 
 interface ProductWithRelations extends Product {
