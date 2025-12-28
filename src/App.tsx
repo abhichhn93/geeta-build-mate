@@ -20,6 +20,7 @@ import { CustomersPage } from "@/components/customers/CustomersPage";
 import { BillingPage } from "@/components/billing/BillingPage";
 import { RateManagementPage } from "@/components/rates/RateManagementPage";
 import { BillScannerPage } from "@/components/admin/BillScannerPage";
+import { AdminSettingsPage } from "@/components/admin/AdminSettingsPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -46,6 +47,7 @@ const App = () => (
                   <Route path="/customers" element={<AppLayout><CustomersPage /></AppLayout>} />
                   <Route path="/rates" element={<AppLayout><RateManagementPage /></AppLayout>} />
                   <Route path="/bill-scanner" element={<AppLayout><BillScannerPage /></AppLayout>} />
+                  <Route path="/admin" element={<AppLayout><AdminSettingsPage /></AppLayout>} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </BrowserRouter>
