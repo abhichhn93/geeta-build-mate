@@ -2,3 +2,6 @@ project_id = "nwxfaxywylrfnyokpuqa"
 
 [functions.ocr-bill-scanner]
 verify_jwt = false
+
+[functions.ai-command-parser]
+verify_jwt = false

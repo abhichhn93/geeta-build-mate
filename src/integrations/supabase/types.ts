@@ -205,6 +205,152 @@ export type Database = {
         }
         Relationships: []
       }
+      draft_cards: {
+        Row: {
+          created_at: string | null
+          id: string
+          intent: string
+          parse_confidence: number
+          parse_source: Database["public"]["Enums"]["parse_source"]
+          parsed_json: Json
+          raw_input: string | null
+          status: Database["public"]["Enums"]["draft_status"]
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          intent: string
+          parse_confidence?: number
+          parse_source: Database["public"]["Enums"]["parse_source"]
+          parsed_json: Json
+          raw_input?: string | null
+          status?: Database["public"]["Enums"]["draft_status"]
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          intent?: string
+          parse_confidence?: number
+          parse_source?: Database["public"]["Enums"]["parse_source"]
+          parsed_json?: Json
+          raw_input?: string | null
+          status?: Database["public"]["Enums"]["draft_status"]
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      draft_clarifications: {
+        Row: {
+          created_at: string | null
+          draft_id: string
+          id: number
+          options: Json | null
+          prompt: string
+          reason_code: string
+          resolved: boolean | null
+          resolved_value: Json | null
+        }
+        Insert: {
+          created_at?: string | null
+          draft_id: string
+          id?: number
+          options?: Json | null
+          prompt: string
+          reason_code: string
+          resolved?: boolean | null
+          resolved_value?: Json | null
+        }
+        Update: {
+          created_at?: string | null
+          draft_id?: string
+          id?: number
+          options?: Json | null
+          prompt?: string
+          reason_code?: string
+          resolved?: boolean | null
+          resolved_value?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "draft_clarifications_draft_id_fkey"
+            columns: ["draft_id"]
+            isOneToOne: false
+            referencedRelation: "draft_cards"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      godowns: {
+        Row: {
+          aliases: string[] | null
+          app_alias: string | null
+          canonical_id: string | null
+          created_at: string | null
+          id: string
+          tally_guid: string | null
+          tally_name: string
+        }
+        Insert: {
+          aliases?: string[] | null
+          app_alias?: string | null
+          canonical_id?: string | null
+          created_at?: string | null
+          id?: string
+          tally_guid?: string | null
+          tally_name: string
+        }
+        Update: {
+          aliases?: string[] | null
+          app_alias?: string | null
+          canonical_id?: string | null
+          created_at?: string | null
+          id?: string
+          tally_guid?: string | null
+          tally_name?: string
+        }
+        Relationships: []
+      }
+      inventory_snapshot: {
+        Row: {
+          closing_balance_qty: number | null
+          godown_id: string
+          last_updated_at: string | null
+          product_id: string
+        }
+        Insert: {
+          closing_balance_qty?: number | null
+          godown_id: string
+          last_updated_at?: string | null
+          product_id: string
+        }
+        Update: {
+          closing_balance_qty?: number | null
+          godown_id?: string
+          last_updated_at?: string | null
+          product_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inventory_snapshot_godown_id_fkey"
+            columns: ["godown_id"]
+            isOneToOne: false
+            referencedRelation: "godowns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_snapshot_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       order_items: {
         Row: {
           created_at: string
@@ -302,6 +448,35 @@ export type Database = {
             columns: ["customer_id"]
             isOneToOne: false
             referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      product_aliases: {
+        Row: {
+          alias_term: string
+          id: number
+          priority: number | null
+          product_id: string
+        }
+        Insert: {
+          alias_term: string
+          id?: number
+          priority?: number | null
+          product_id: string
+        }
+        Update: {
+          alias_term?: string
+          id?: number
+          priority?: number | null
+          product_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_aliases_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
             referencedColumns: ["id"]
           },
         ]
@@ -460,6 +635,36 @@ export type Database = {
         }
         Relationships: []
       }
+      routing_rules: {
+        Row: {
+          action: string
+          category: Database["public"]["Enums"]["product_category"]
+          condition_json: Json
+          created_at: string | null
+          default_godown_canonical_id: string | null
+          direction: string
+          id: number
+        }
+        Insert: {
+          action: string
+          category: Database["public"]["Enums"]["product_category"]
+          condition_json: Json
+          created_at?: string | null
+          default_godown_canonical_id?: string | null
+          direction: string
+          id?: number
+        }
+        Update: {
+          action?: string
+          category?: Database["public"]["Enums"]["product_category"]
+          condition_json?: Json
+          created_at?: string | null
+          default_godown_canonical_id?: string | null
+          direction?: string
+          id?: number
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           id: string
@@ -493,6 +698,21 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "customer"
+      draft_status:
+        | "DRAFT"
+        | "NEEDS_CLARIFICATION"
+        | "CONFIRMED"
+        | "POSTED_TO_TALLY"
+        | "REJECTED"
+      parse_source: "REGEX_RULE" | "LLM_FALLBACK" | "MANUAL_ENTRY"
+      product_category:
+        | "TMT"
+        | "CEMENT"
+        | "PIPE"
+        | "STRUCTURAL"
+        | "SHEET"
+        | "WIRE"
+        | "SERVICE"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -621,6 +841,23 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "customer"],
+      draft_status: [
+        "DRAFT",
+        "NEEDS_CLARIFICATION",
+        "CONFIRMED",
+        "POSTED_TO_TALLY",
+        "REJECTED",
+      ],
+      parse_source: ["REGEX_RULE", "LLM_FALLBACK", "MANUAL_ENTRY"],
+      product_category: [
+        "TMT",
+        "CEMENT",
+        "PIPE",
+        "STRUCTURAL",
+        "SHEET",
+        "WIRE",
+        "SERVICE",
+      ],
     },
   },
 } as const
