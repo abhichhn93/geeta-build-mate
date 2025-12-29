@@ -102,7 +102,9 @@ export interface DraftCardRender {
   intent: Intent;
   intent_display: string;
   customer_display?: {
+    id?: string;
     name: string;
+    phone?: string;
     balance?: string;
     match_method?: 'PHONE_EXACT' | 'TOKEN_MATCH' | 'FUZZY' | 'NONE';
     is_ambiguous: boolean;

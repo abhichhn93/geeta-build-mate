@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { LanguageToggle } from '@/components/layout/LanguageToggle';
 import { ThemeSwitcher } from '@/components/layout/ThemeSwitcher';
-import { EnhancedVoiceAssistant } from '@/components/voice/EnhancedVoiceAssistant';
+import { SmartVoiceAssistant } from '@/components/voice/SmartVoiceAssistant';
 import { 
   Share2, 
   TrendingUp, 
@@ -335,7 +335,7 @@ export function HomePage() {
       </div>
 
       {/* Voice Assistant - Available for all logged-in users */}
-      {user && <EnhancedVoiceAssistant />}
+      {user && <SmartVoiceAssistant />}
     </div>
   );
 }

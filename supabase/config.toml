@@ -5,3 +5,6 @@ verify_jwt = false
 
 [functions.ai-command-parser]
 verify_jwt = false
+
+[functions.import-seed-data]
+verify_jwt = false
