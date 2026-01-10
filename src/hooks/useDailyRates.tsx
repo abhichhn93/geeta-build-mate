@@ -26,33 +26,59 @@ export function useDailyRates(date?: string) {
 }
 
 // Fetch the latest available rates (for homepage Rate Board)
+// NOTE: We intentionally do NOT pick a single latest day for the entire table.
+// If an admin updates only one brand today, the "latest day" would become today and
+// all other brands would disappear from the homepage. Instead, we return the latest
+// entry per (category, brand, size).
 export function useLatestRates() {
   return useQuery({
     queryKey: ['daily_rates', 'latest'],
     queryFn: async () => {
-      // First get the most recent rate date
-      const { data: latestDate, error: dateError } = await supabase
-        .from('daily_rates')
-        .select('rate_date')
-        .order('rate_date', { ascending: false })
-        .limit(1)
-        .single();
-      
-      if (dateError || !latestDate) {
-        return { rates: [], date: null };
-      }
-
-      // Then fetch all rates for that date
-      const { data: rates, error } = await supabase
+      // Pull recent history and collapse to the latest record per key.
+      // Default query limit is 1000; our dataset is small.
+      const { data, error } = await supabase
         .from('daily_rates')
         .select('*')
-        .eq('rate_date', latestDate.rate_date)
+        .order('rate_date', { ascending: false })
         .order('category')
         .order('brand')
-        .order('size');
-      
+        .order('size')
+        .limit(1000);
+
       if (error) throw error;
-      return { rates: rates || [], date: latestDate.rate_date };
+
+      const rows = data || [];
+      const latestByKey = new Map<string, DailyRate>();
+
+      for (const r of rows) {
+        const key = `${r.category}__${r.brand}__${r.size ?? ''}`;
+        if (!latestByKey.has(key)) {
+          latestByKey.set(key, r);
+        }
+      }
+
+      const rates = Array.from(latestByKey.values());
+
+      const parseSize = (s: string | null) => {
+        if (!s) return Number.POSITIVE_INFINITY;
+        const m = s.match(/(\d+(?:\.\d+)?)/);
+        return m ? Number(m[1]) : Number.POSITIVE_INFINITY;
+      };
+
+      // Sort for consistent UI display
+      rates.sort((a, b) => {
+        if (a.category !== b.category) return a.category.localeCompare(b.category);
+        if (a.brand !== b.brand) return a.brand.localeCompare(b.brand);
+        return parseSize(a.size) - parseSize(b.size);
+      });
+
+      // Latest date among returned rows (used only as a header hint)
+      const maxDate = rates.reduce<string | null>((max, r) => {
+        if (!max) return r.rate_date;
+        return r.rate_date > max ? r.rate_date : max;
+      }, null);
+
+      return { rates, date: maxDate };
     },
     staleTime: 2 * 60 * 1000,
   });
