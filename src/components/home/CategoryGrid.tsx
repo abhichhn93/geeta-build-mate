@@ -77,7 +77,7 @@ const categories: CategoryItem[] = [
     id: 'calculator',
     nameEn: 'TMT Calc',
     nameHi: 'वजन कैलक',
-    icon: <Calculator className="h-8 w-8" />,
+    icon: <Calculator className="h-10 w-10 text-primary" />,
     link: '/calculator',
     highlight: true,
     badge: { en: 'Tool', hi: 'टूल' },
@@ -93,35 +93,40 @@ export function CategoryGrid() {
         <Link
           key={category.id}
           to={category.link}
-          className={`flex flex-col items-center gap-2 rounded-2xl p-3 text-center transition-all active:scale-95 ${
+          className={`group flex flex-col items-center gap-2 rounded-2xl bg-card p-2 text-center transition-all duration-200 active:scale-95 ${
             category.highlight
-              ? 'border-2 border-primary bg-primary/10 shadow-md hover:shadow-lg'
-              : 'border border-border bg-card shadow-sm hover:border-primary/50 hover:shadow-md'
+              ? 'ring-2 ring-primary/30 shadow-lg shadow-primary/10'
+              : 'shadow-md hover:shadow-lg'
           }`}
         >
-          <div className={`flex h-16 w-16 items-center justify-center rounded-xl overflow-hidden ${
+          {/* Image Container - Large rounded square */}
+          <div className={`flex h-[72px] w-[72px] items-center justify-center rounded-2xl overflow-hidden transition-transform duration-200 group-hover:scale-105 ${
             category.highlight
-              ? 'bg-primary text-primary-foreground'
-              : 'bg-gradient-to-br from-muted to-muted/50'
+              ? 'bg-primary/10'
+              : 'bg-gradient-to-br from-slate-100 to-slate-50 dark:from-slate-800 dark:to-slate-700'
           }`}>
             {category.image ? (
               <img 
                 src={category.image} 
                 alt={category.nameEn}
-                className="h-14 w-14 object-contain drop-shadow-sm"
+                className="h-14 w-14 object-contain drop-shadow-md"
               />
             ) : (
               category.icon
             )}
           </div>
-          <span className="text-sm font-semibold leading-tight text-foreground">
-            {language === 'en' ? category.nameEn : category.nameHi}
-          </span>
-          {category.badge && (
-            <Badge variant="secondary" className="text-[10px] px-2 py-0.5 -mt-1">
-              {language === 'en' ? category.badge.en : category.badge.hi}
-            </Badge>
-          )}
+          
+          {/* Label */}
+          <div className="flex flex-col items-center gap-0.5">
+            <span className="text-sm font-semibold text-foreground leading-tight">
+              {language === 'en' ? category.nameEn : category.nameHi}
+            </span>
+            {category.badge && (
+              <Badge variant="secondary" className="text-[9px] px-1.5 py-0 h-4">
+                {language === 'en' ? category.badge.en : category.badge.hi}
+              </Badge>
+            )}
+          </div>
         </Link>
       ))}
     </div>
