@@ -25,7 +25,25 @@ interface ParseResult {
 // Detect intent from text
 function detectIntent(text: string): { intent: Intent; confidence: number } {
   const lowerText = text.toLowerCase();
-  
+
+  // --- High-signal Hindi/English heuristics for RATE commands (avoid AI fallback) ---
+  // Examples:
+  //  - "एसीसी सीमेंट का रेट 395 कर दो"
+  //  - "अंकुर टीएमटी 8mm का रेट 65 रुपये कर दो"
+  const hasRateWord = /(?:\brate\b|रेट|bhav|भाव|price|दाम)/i.test(text);
+  const hasNumber = /\b(\d+(?:\.\d+)?)\b/.test(text);
+  const hasUpdateVerb = /(kar\s*do|kar\s*de|karo|set|change|update|lagao|लगाओ|कर\s*दो|कर\s*दे|करो)/i.test(text);
+  const hasQueryWord = /(kitna|kya|कितना|क्या)\s*(hai|है)?/i.test(text);
+
+  if (hasRateWord && hasQueryWord) {
+    return { intent: 'CHECK_RATE', confidence: 0.88 };
+  }
+
+  if (hasRateWord && hasNumber && hasUpdateVerb) {
+    return { intent: 'UPDATE_RATE', confidence: 0.88 };
+  }
+
+  // Keyword-based detection (exact phrases)
   for (const [intent, keywords] of Object.entries(INTENT_KEYWORDS)) {
     for (const keyword of keywords) {
       if (lowerText.includes(keyword.toLowerCase())) {
@@ -33,39 +51,57 @@ function detectIntent(text: string): { intent: Intent; confidence: number } {
       }
     }
   }
-  
+
   // Fallback heuristics
-  if (/\d+\s*(mm|piece|pcs|bori|kg)/i.test(text)) {
-    // Has quantity + unit, likely an estimate/order
+  if (/\d+\s*(mm|piece|pcs|bori|kg|bag|कट्टा|बोरी|किलो)/i.test(text)) {
+    // Has quantity + unit/size, likely an estimate/order
     return { intent: 'CREATE_ESTIMATE', confidence: 0.6 };
   }
-  
+
   return { intent: 'CREATE_ESTIMATE', confidence: 0.3 };
 }
 
 // Extract category from text
 function extractCategory(text: string): ProductCategory | undefined {
   const lowerText = text.toLowerCase();
-  
+
   for (const [alias, category] of Object.entries(CATEGORY_ALIASES)) {
     if (lowerText.includes(alias.toLowerCase())) {
       return category as ProductCategory;
     }
   }
-  
+
+  // Heuristic: if user says "8mm/10mm" but forgot "TMT/सरिया"
+  if (SIZE_PATTERNS.TMT_MM.test(text)) return 'tmt';
+
+  // Heuristic: if user says cement words but alias missed due to punctuation
+  if (/(cement|सीमेंट|बोरी|कट्टा|bag|bori|katta)/i.test(text)) return 'cement';
+
   return undefined;
 }
 
 // Extract brand from text
 function extractBrand(text: string): string | undefined {
-  const lowerText = text.toLowerCase();
-  
-  for (const [alias, brand] of Object.entries(BRAND_ALIASES)) {
+  // Normalize lightly (remove common punctuation that STT sometimes inserts)
+  const lowerText = text.toLowerCase().replace(/[\.,:;\-_/]+/g, ' ');
+
+  // Prefer longer aliases first (e.g. "bangur power" before "bangur")
+  const entries = Object.entries(BRAND_ALIASES).sort((a, b) => b[0].length - a[0].length);
+
+  for (const [alias, brand] of entries) {
     if (lowerText.includes(alias.toLowerCase())) {
       return brand;
     }
   }
-  
+
+  // Fallback: grab the first word before a known category/size token
+  const m = lowerText.match(/^([a-zA-Z\u0900-\u097F]+)\s+(?:tmt|टीएमटी|सरिया|sariya|cement|सीमेंट|pipe|पाइप|sheet|शीट)\b/i);
+  if (m) {
+    const token = m[1];
+    // If token matches an alias, map it, otherwise just return the token as-is.
+    return BRAND_ALIASES[token] || token;
+  }
+
   return undefined;
 }
 

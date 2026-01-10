@@ -28,20 +28,56 @@ export const CATEGORY_ALIASES: Record<string, string> = {
 
 // Brand keywords -> canonical brand name
 export const BRAND_ALIASES: Record<string, string> = {
-  // TMT brands
-  'kamdhenu': 'Kamdhenu', 'nxt': 'Kamdhenu NXT', 'कामधेनु': 'Kamdhenu',
-  'kay2': 'Kay 2', 'kay 2': 'Kay 2', 'के2': 'Kay 2',
-  'ankur': 'Ankur', 'अंकुर': 'Ankur',
-  'jindal': 'Jindal', 'panther': 'Jindal Panther', 'जिंदल': 'Jindal',
-  'singhal': 'Singhal', 'सिंघल': 'Singhal',
-  'radhe': 'Radhe', 'राधे': 'Radhe',
-  'tata': 'TATA', 'tiscon': 'TATA Tiscon', 'टाटा': 'TATA',
+  // --- Prefer longer phrases first (extractBrand sorts by length too) ---
+
   // Cement brands
-  'bangur': 'Bangur', 'power': 'Bangur Power', 'megna': 'Bangur Megna', 'बांगड़': 'Bangur',
-  'mycem': 'Mycem', 'माईसेम': 'Mycem',
-  'dalmia': 'Dalmia', 'डालमिया': 'Dalmia',
-  'acc': 'ACC', 'एसीसी': 'ACC',
-  'ultratech': 'Ultratech', 'अल्ट्राटेक': 'Ultratech',
+  'bangur power': 'Bangur Power',
+  'बांगुर पावर': 'Bangur Power',
+  'bangur': 'Bangur Power',
+  'बांगुर': 'Bangur Power',
+
+  'mycem': 'Mycem',
+  'माईसेम': 'Mycem',
+
+  'dalmia': 'Dalmia',
+  'डालमिया': 'Dalmia',
+
+  'acc': 'ACC',
+  'एसीसी': 'ACC',
+  'ए.सी.सी.': 'ACC',
+
+  'ultratech': 'Ultratech',
+  'अल्ट्राटेक': 'Ultratech',
+
+  // TMT brands
+  'kamdhenu nxt': 'Kamdhenu NXT',
+  'kamdhenu': 'Kamdhenu',
+  'nxt': 'Kamdhenu NXT',
+  'कामधेनु': 'Kamdhenu',
+
+  'kay2': 'Kay2',
+  'kay 2': 'Kay2',
+  'के2': 'Kay2',
+
+  'ankur': 'Ankur',
+  'अंकुर': 'Ankur',
+  'अन्कुर': 'Ankur',
+
+  'jindal panther': 'Jindal Panther',
+  'panther': 'Jindal Panther',
+  'jindal': 'Jindal',
+  'जिंदल': 'Jindal',
+
+  'singhal': 'Singhal',
+  'सिंघल': 'Singhal',
+
+  'radhe': 'Radhe',
+  'राधे': 'Radhe',
+
+  'tata tiscon': 'TATA Tiscon',
+  'tiscon': 'TATA Tiscon',
+  'tata': 'Tata',
+  'टाटा': 'Tata',
 };
 
 // Godown aliases -> canonical ID
