@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -53,6 +54,46 @@ serve(async (req) => {
   }
 
   try {
+    // Authentication check - validate JWT and admin role
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader?.startsWith('Bearer ')) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'Unauthorized - No valid token provided' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_ANON_KEY')!,
+      { global: { headers: { Authorization: authHeader } } }
+    );
+
+    // Verify the user is authenticated
+    const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
+    
+    if (authError || !user) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'Unauthorized - Invalid token' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Check if user has admin role
+    const { data: roleData, error: roleError } = await supabaseClient
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', user.id)
+      .single();
+
+    if (roleError || roleData?.role !== 'admin') {
+      return new Response(
+        JSON.stringify({ success: false, error: 'Forbidden - Admin access required' }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Now proceed with OCR processing
     const { imageBase64 } = await req.json();
 
     if (!imageBase64) {
@@ -71,7 +112,7 @@ serve(async (req) => {
       );
     }
 
-    console.log('Processing bill image with AI...');
+    console.log('Processing bill image for admin user:', user.id);
 
     // Use Gemini 2.5 Flash for vision + text (good balance of speed and accuracy)
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
@@ -154,12 +195,11 @@ serve(async (req) => {
       
       parsedResult = JSON.parse(cleanContent.trim());
     } catch (parseError) {
-      console.error('Failed to parse AI response as JSON:', content);
+      console.error('Failed to parse AI response as JSON');
       return new Response(
         JSON.stringify({ 
           success: false, 
-          error: 'Failed to parse extracted data',
-          rawResponse: content 
+          error: 'Failed to parse extracted data'
         }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
@@ -174,7 +214,7 @@ serve(async (req) => {
   } catch (error) {
     console.error('OCR bill scanner error:', error);
     return new Response(
-      JSON.stringify({ success: false, error: error instanceof Error ? error.message : 'Unknown error' }),
+      JSON.stringify({ success: false, error: 'An error occurred during processing' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
