@@ -25,6 +25,7 @@ export interface CommandResult {
 
 // Brand name mappings (Hindi/English variations)
 const BRAND_MAPPINGS: Record<string, string> = {
+  // TMT brands
   'kamdhenu': 'Kamdhenu',
   'कामधेनु': 'Kamdhenu',
   'jindal': 'Jindal',
@@ -35,6 +36,22 @@ const BRAND_MAPPINGS: Record<string, string> = {
   'टिस्कन': 'TATA Tiscon',
   'jsw': 'JSW',
   'जेएसडब्ल्यू': 'JSW',
+  'ankur': 'Ankur',
+  'अंकुर': 'Ankur',
+  'rathi': 'Rathi',
+  'राठी': 'Rathi',
+  'sail': 'SAIL',
+  'सेल': 'SAIL',
+  'vizag': 'Vizag',
+  'विजाग': 'Vizag',
+  'shyam': 'Shyam',
+  'श्याम': 'Shyam',
+  'srmb': 'SRMB',
+  'एसआरएमबी': 'SRMB',
+  'prime gold': 'Prime Gold',
+  'प्राइम गोल्ड': 'Prime Gold',
+  'primegold': 'Prime Gold',
+  // Cement brands
   'acc': 'ACC',
   'एसीसी': 'ACC',
   'ambuja': 'Ambuja',
@@ -45,12 +62,20 @@ const BRAND_MAPPINGS: Record<string, string> = {
   'बिरला': 'Birla',
   'shree': 'Shree',
   'श्री': 'Shree',
+  'dalmia': 'Dalmia',
+  'डालमिया': 'Dalmia',
+  'bangur': 'Bangur',
+  'बांगुर': 'Bangur',
+  'jk': 'JK Cement',
+  'जेके': 'JK Cement',
 };
 
-// Regex patterns for different commands
-const RATE_UPDATE_PATTERN = /(?<brand>[a-zA-Z\u0900-\u097F]+)\s*(?<size>\d+\s*mm)?\s*(cement|सीमेंट)?\s*(ka|ke|का|के)\s*rate\s*(?<price>\d+)\s*(kar\s*do|karo|करो|कर\s*दो|set|change)?/i;
+// Regex patterns for different commands - improved to capture TMT/सरिया/टीएमटी
+const RATE_UPDATE_PATTERN = /(?<brand>[a-zA-Z\u0900-\u097F]+)\s*(?:tmt|टीएमटी|sariya|सरिया|cement|सीमेंट)?\s*(?<size>\d+\s*(?:mm|मिमी)?)\s*(?:ka|ke|का|के)\s*(?:rate|रेट)\s*(?<price>\d+)\s*(?:rupay|rupees|rupia|rupya|रुपया|रुपये|rs|₹)?\s*(?:kar\s*do|karo|करो|कर\s*दो|set|change)?/i;
 
-const RATE_QUERY_PATTERN = /(?<brand>[a-zA-Z\u0900-\u097F]+)\s*(?<size>\d+\s*mm)?\s*(cement|सीमेंट)?\s*(ka|ke|का|के)\s*rate\s*(kitna|कितना|kya|क्या)\s*(hai|है|h)?/i;
+const RATE_UPDATE_PATTERN_ALT = /(?<brand>[a-zA-Z\u0900-\u097F]+)\s*(?:tmt|टीएमटी|sariya|सरिया|cement|सीमेंट)?\s*(?:ka|ke|का|के)\s*(?:rate|रेट)\s*(?<price>\d+)\s*(?:rupay|rupees|rupia|rupya|रुपया|रुपये|rs|₹)?\s*(?:kar\s*do|karo|करो|कर\s*दो|set|change)?/i;
+
+const RATE_QUERY_PATTERN = /(?<brand>[a-zA-Z\u0900-\u097F]+)\s*(?:tmt|टीएमटी|sariya|सरिया|cement|सीमेंट)?\s*(?<size>\d+\s*(?:mm|मिमी)?)?\s*(?:ka|ke|का|के)\s*(?:rate|रेट)\s*(?:kitna|कितना|kya|क्या)\s*(?:hai|है|h)?/i;
 
 const PAYMENT_REMINDER_PATTERN = /(?<name>[a-zA-Z\u0900-\u097F\s]+)\s*(ko|को)\s*(?<amount>\d+)?\s*(ka|का)?\s*payment\s*reminder\s*(bhej|भेज|send)?\s*(do|दो)?/i;
 
@@ -58,17 +83,28 @@ const PAYMENT_REMINDER_PATTERN = /(?<name>[a-zA-Z\u0900-\u097F\s]+)\s*(ko|को
 export function parseCommandClause(clause: string): ParsedCommand {
   const text = clause.trim().toLowerCase();
   
-  // Try rate update pattern
-  const updateMatch = text.match(RATE_UPDATE_PATTERN);
+  // Detect category from keywords
+  const isCement = text.includes('cement') || text.includes('सीमेंट');
+  const isTMT = text.includes('tmt') || text.includes('टीएमटी') || text.includes('sariya') || text.includes('सरिया') || text.match(/\d+\s*(mm|मिमी)/i);
+  
+  // Try rate update pattern (with size)
+  let updateMatch = text.match(RATE_UPDATE_PATTERN);
+  if (!updateMatch?.groups?.price) {
+    // Try alternate pattern (without size)
+    updateMatch = text.match(RATE_UPDATE_PATTERN_ALT);
+  }
+  
   if (updateMatch?.groups) {
     const brandKey = updateMatch.groups.brand?.toLowerCase();
-    const isCement = text.includes('cement') || text.includes('सीमेंट');
-    const sizeRaw = updateMatch.groups.size?.replace(/\s+/g, '');
+    const sizeRaw = updateMatch.groups.size?.replace(/\s+/g, '').replace('मिमी', 'mm');
+    
+    // Determine category: if has size like 8mm/10mm -> TMT, if cement keyword -> cement
+    const category = isCement ? 'cement' : 'sariya';
     
     return {
       type: 'update_rate',
       brand: BRAND_MAPPINGS[brandKey] || updateMatch.groups.brand,
-      category: isCement ? 'cement' : 'sariya',
+      category,
       size: sizeRaw ? sizeRaw : undefined,
       price: parseInt(updateMatch.groups.price, 10),
       rawClause: clause,
@@ -79,13 +115,13 @@ export function parseCommandClause(clause: string): ParsedCommand {
   const queryMatch = text.match(RATE_QUERY_PATTERN);
   if (queryMatch?.groups) {
     const brandKey = queryMatch.groups.brand?.toLowerCase();
-    const isCement = text.includes('cement') || text.includes('सीमेंट');
-    const sizeRaw = queryMatch.groups.size?.replace(/\s+/g, '');
+    const sizeRaw = queryMatch.groups.size?.replace(/\s+/g, '').replace('मिमी', 'mm');
+    const category = isCement ? 'cement' : 'sariya';
     
     return {
       type: 'query_rate',
       brand: BRAND_MAPPINGS[brandKey] || queryMatch.groups.brand,
-      category: isCement ? 'cement' : 'sariya',
+      category,
       size: sizeRaw ? sizeRaw : undefined,
       rawClause: clause,
     };
