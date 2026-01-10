@@ -7,6 +7,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useLanguage } from '@/hooks/useLanguage';
 import { useCart } from '@/hooks/useCart';
 import { formatINR } from '@/lib/whatsapp';
+import { getProductImage } from '@/lib/product-images';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -14,6 +15,7 @@ import { Input } from '@/components/ui/input';
 import { ProductFilters, ProductFiltersState } from './ProductFilters';
 import { ProductEditModal } from './ProductEditModal';
 import { BranchSelector } from './BranchSelector';
+import { TMTMatrixView } from './TMTMatrixView';
 import { VoiceAssistant } from '@/components/voice/VoiceAssistant';
 import {
   AlertDialog,
@@ -341,7 +343,15 @@ export function ProductsPage({ onAddToCart }: ProductsPageProps) {
         </div>
       )}
 
-      {/* Products Grid - 2 columns */}
+      {/* TMT Matrix View - Show for TMT category */}
+      {selectedCategory === '0333cb8e-b576-4c96-ae42-f2c5f2965a46' && (
+        <div className="mx-auto max-w-lg p-4 pt-3">
+          <TMTMatrixView />
+        </div>
+      )}
+
+      {/* Products Grid - 2 columns (hide for TMT category) */}
+      {selectedCategory !== '0333cb8e-b576-4c96-ae42-f2c5f2965a46' && (
       <div className="mx-auto max-w-lg p-4 pt-3">
         {isLoading ? (
           <div className="grid grid-cols-2 gap-2.5">
@@ -359,11 +369,11 @@ export function ProductsPage({ onAddToCart }: ProductsPageProps) {
           <div className="grid grid-cols-2 gap-2.5">
             {filteredProducts.map((product) => (
               <Card key={product.id} className="overflow-hidden shadow-sm hover:shadow-md transition-shadow">
-                {/* Product Image - compact aspect ratio for 4 visible cards */}
+                {/* Product Image - use product-images mapping */}
                 <div className="relative aspect-[5/3] bg-gradient-to-br from-muted/50 to-muted">
-                  {product.image_url ? (
+                  {(product.image_url || getProductImage(product.name_en)) ? (
                     <img
-                      src={product.image_url}
+                      src={product.image_url || getProductImage(product.name_en) || ''}
                       alt={product.name_en}
                       className="h-full w-full object-cover"
                       loading="lazy"
@@ -481,6 +491,7 @@ export function ProductsPage({ onAddToCart }: ProductsPageProps) {
           </div>
         )}
       </div>
+      )}
 
       {/* Edit Modal */}
       <ProductEditModal
