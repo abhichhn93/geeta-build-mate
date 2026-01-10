@@ -21,6 +21,7 @@ import { BillingPage } from "@/components/billing/BillingPage";
 import { RateManagementPage } from "@/components/rates/RateManagementPage";
 import { BillScannerPage } from "@/components/admin/BillScannerPage";
 import { AdminSettingsPage } from "@/components/admin/AdminSettingsPage";
+import { AdminDashboard } from "@/components/admin/AdminDashboard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -37,6 +38,7 @@ const App = () => (
               <BrowserRouter>
                 <Routes>
                   <Route path="/" element={<AppLayout><HomePage /></AppLayout>} />
+                  <Route path="/dashboard" element={<AppLayout><AdminDashboard /></AppLayout>} />
                   <Route path="/products" element={<AppLayout><ProductsPage /></AppLayout>} />
                   <Route path="/calculator" element={<AppLayout><TMTCalculatorPage /></AppLayout>} />
                   <Route path="/auth" element={<AuthPage />} />

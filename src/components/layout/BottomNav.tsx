@@ -1,5 +1,5 @@
 import { NavLink, useLocation } from 'react-router-dom';
-import { Home, Package, ShoppingCart, ClipboardList, User, Settings } from 'lucide-react';
+import { Home, Package, ShoppingCart, ClipboardList, User, Settings, LayoutDashboard } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useLanguage } from '@/hooks/useLanguage';
 import { useCart } from '@/hooks/useCart';
@@ -14,9 +14,9 @@ const customerNavItems = [
   { to: '/account', icon: User, label: 'Account', labelHi: 'खाता' },
 ];
 
-// Admin: Home (Dashboard), Products, Billing (POS), Orders, Admin Settings
+// Admin: Dashboard, Products, Billing (POS), Orders, Admin Settings
 const adminNavItems = [
-  { to: '/', icon: Home, label: 'Home', labelHi: 'होम' },
+  { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard', labelHi: 'डैशबोर्ड' },
   { to: '/products', icon: Package, label: 'Products', labelHi: 'प्रोडक्ट्स' },
   { to: '/billing', icon: ShoppingCart, label: 'POS', labelHi: 'बिलिंग' },
   { to: '/orders', icon: ClipboardList, label: 'Orders', labelHi: 'ऑर्डर्स' },

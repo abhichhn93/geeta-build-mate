@@ -344,14 +344,14 @@ export function ProductsPage({ onAddToCart }: ProductsPageProps) {
       )}
 
       {/* TMT Matrix View - Show for TMT category */}
-      {selectedCategory === '0333cb8e-b576-4c96-ae42-f2c5f2965a46' && (
+      {selectedCategory === '11111111-1111-1111-1111-111111111101' && (
         <div className="mx-auto max-w-lg p-4 pt-3">
           <TMTMatrixView />
         </div>
       )}
 
       {/* Products Grid - 2 columns (hide for TMT category) */}
-      {selectedCategory !== '0333cb8e-b576-4c96-ae42-f2c5f2965a46' && (
+      {selectedCategory !== '11111111-1111-1111-1111-111111111101' && (
       <div className="mx-auto max-w-lg p-4 pt-3">
         {isLoading ? (
           <div className="grid grid-cols-2 gap-2.5">

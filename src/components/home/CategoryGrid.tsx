@@ -2,10 +2,10 @@ import { Link } from 'react-router-dom';
 import { useLanguage } from '@/hooks/useLanguage';
 import { 
   CircleDot, 
-  Box, 
+  Package, 
   Triangle, 
   Cylinder, 
-  LayoutGrid, 
+  Layers, 
   Sun, 
   Wrench, 
   Calculator 
@@ -22,55 +22,56 @@ interface CategoryItem {
   badge?: { en: string; hi: string };
 }
 
+// Updated with new category UUIDs
 const categories: CategoryItem[] = [
   {
     id: 'tmt',
     nameEn: 'Sariya',
     nameHi: 'सरिया',
     icon: <CircleDot className="h-5 w-5" />,
-    link: '/products?category=0333cb8e-b576-4c96-ae42-f2c5f2965a46',
+    link: '/products?category=11111111-1111-1111-1111-111111111101',
   },
   {
     id: 'cement',
     nameEn: 'Cement',
     nameHi: 'सीमेंट',
-    icon: <Box className="h-5 w-5" />,
-    link: '/products?category=800b5781-b79e-4fb0-87a0-8d192eab01b8',
+    icon: <Package className="h-5 w-5" />,
+    link: '/products?category=11111111-1111-1111-1111-111111111102',
   },
   {
     id: 'structural',
     nameEn: 'Angle/Patti',
     nameHi: 'एंगल/पट्टी',
     icon: <Triangle className="h-5 w-5" />,
-    link: '/products?category=35df5ed6-d693-4682-a00a-db647da5460f',
+    link: '/products?category=11111111-1111-1111-1111-111111111103',
   },
   {
     id: 'pipe',
     nameEn: 'Pipe',
     nameHi: 'पाइप',
     icon: <Cylinder className="h-5 w-5" />,
-    link: '/products?category=c2e845dd-f129-44c7-affb-6990fee9b38a',
+    link: '/products?category=11111111-1111-1111-1111-111111111104',
   },
   {
     id: 'sheet',
     nameEn: 'Sheet',
     nameHi: 'शीट',
-    icon: <LayoutGrid className="h-5 w-5" />,
-    link: '/products?category=017d837e-e46f-438e-833f-8dc34e9ac899',
-  },
-  {
-    id: 'hardware',
-    nameEn: 'Wire/Hardware',
-    nameHi: 'तार/हार्डवेयर',
-    icon: <Wrench className="h-5 w-5" />,
-    link: '/products?category=58ed85d4-c8bb-43e2-a1a4-7b84f2649deb',
+    icon: <Layers className="h-5 w-5" />,
+    link: '/products?category=11111111-1111-1111-1111-111111111105',
   },
   {
     id: 'solar',
-    nameEn: 'Solar',
-    nameHi: 'सोलर',
+    nameEn: 'Solar/GI',
+    nameHi: 'सोलर/जीआई',
     icon: <Sun className="h-5 w-5" />,
-    link: '/products?category=d73dda81-0d67-45bb-b728-c456f371b833',
+    link: '/products?category=11111111-1111-1111-1111-111111111106',
+  },
+  {
+    id: 'hardware',
+    nameEn: 'Hardware',
+    nameHi: 'हार्डवेयर',
+    icon: <Wrench className="h-5 w-5" />,
+    link: '/products?category=11111111-1111-1111-1111-111111111107',
   },
   {
     id: 'calculator',
@@ -84,7 +85,7 @@ const categories: CategoryItem[] = [
 ];
 
 export function CategoryGrid() {
-  const { language, t } = useLanguage();
+  const { language } = useLanguage();
 
   return (
     <div className="grid grid-cols-4 gap-2">

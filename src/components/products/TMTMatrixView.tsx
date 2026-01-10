@@ -9,8 +9,8 @@ import { Plus, Minus, ShoppingCart, MessageCircle } from 'lucide-react';
 import { tmtBar } from '@/lib/product-images';
 import { toast } from 'sonner';
 
-// TMT Brands as per Geeta Traders catalog
-const TMT_BRANDS = ['Kamdhenu', 'Ankur', 'Kay2', 'Radhe', 'Singhal'] as const;
+// TMT Brands as per Geeta Traders catalog (from Excel data)
+const TMT_BRANDS = ['Kamdhenu', 'Ankur', 'Kay2', 'Radhe', 'Singhal', 'Jindal', 'Tata'] as const;
 
 // TMT Sizes
 const TMT_SIZES = ['6mm', '8mm', '10mm', '12mm', '16mm', '20mm', '25mm'] as const;
