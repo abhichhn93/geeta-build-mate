@@ -77,7 +77,7 @@ const categories: CategoryItem[] = [
     id: 'calculator',
     nameEn: 'TMT Calc',
     nameHi: 'वजन कैलक',
-    icon: <Calculator className="h-6 w-6" />,
+    icon: <Calculator className="h-8 w-8" />,
     link: '/calculator',
     highlight: true,
     badge: { en: 'Tool', hi: 'टूल' },
@@ -88,37 +88,37 @@ export function CategoryGrid() {
   const { language } = useLanguage();
 
   return (
-    <div className="grid grid-cols-4 gap-2">
+    <div className="grid grid-cols-4 gap-3">
       {categories.map((category) => (
         <Link
           key={category.id}
           to={category.link}
-          className={`flex flex-col items-center gap-1.5 rounded-xl p-2 text-center transition-all ${
+          className={`flex flex-col items-center gap-2 rounded-2xl p-3 text-center transition-all active:scale-95 ${
             category.highlight
-              ? 'border-2 border-primary/30 bg-primary/5 hover:border-primary hover:shadow-md'
-              : 'border bg-card hover:border-primary/50 hover:shadow-sm'
+              ? 'border-2 border-primary bg-primary/10 shadow-md hover:shadow-lg'
+              : 'border border-border bg-card shadow-sm hover:border-primary/50 hover:shadow-md'
           }`}
         >
-          <div className={`flex h-12 w-12 items-center justify-center rounded-lg overflow-hidden ${
+          <div className={`flex h-16 w-16 items-center justify-center rounded-xl overflow-hidden ${
             category.highlight
               ? 'bg-primary text-primary-foreground'
-              : 'bg-muted/50'
+              : 'bg-gradient-to-br from-muted to-muted/50'
           }`}>
             {category.image ? (
               <img 
                 src={category.image} 
                 alt={category.nameEn}
-                className="h-full w-full object-contain p-1"
+                className="h-14 w-14 object-contain drop-shadow-sm"
               />
             ) : (
               category.icon
             )}
           </div>
-          <span className="text-xs font-medium leading-tight">
+          <span className="text-sm font-semibold leading-tight text-foreground">
             {language === 'en' ? category.nameEn : category.nameHi}
           </span>
           {category.badge && (
-            <Badge variant="secondary" className="text-[8px] px-1.5 py-0">
+            <Badge variant="secondary" className="text-[10px] px-2 py-0.5 -mt-1">
               {language === 'en' ? category.badge.en : category.badge.hi}
             </Badge>
           )}

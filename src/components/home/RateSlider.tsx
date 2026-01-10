@@ -190,20 +190,20 @@ export function RateSlider() {
                 <div key={slide.type} className="w-full flex-shrink-0">
                   {slide.type === 'tmt' ? (
                     <div>
-                      <div className="text-[9px] text-muted-foreground mb-1 text-center">
+                      <div className="text-[9px] text-muted-foreground mb-1.5 text-center">
                         ₹/{t('kg', 'किग्रा')}
                       </div>
-                      {/* Compact 2-row grid for TMT - 4-5 columns */}
-                      <div className="grid grid-cols-5 gap-1">
-                        {slide.rates.slice(0, 10).map((rate) => (
+                      {/* 3-row grid for TMT - 4 columns */}
+                      <div className="grid grid-cols-4 gap-1.5">
+                        {slide.rates.slice(0, 12).map((rate) => (
                           <div
                             key={rate.id}
-                            className="flex flex-col items-center justify-center rounded border bg-muted/30 px-1 py-1"
+                            className="flex flex-col items-center justify-center rounded-lg border bg-muted/30 px-1.5 py-1.5"
                           >
-                            <span className="text-[8px] font-medium text-foreground truncate text-center w-full leading-tight">
+                            <span className="text-[9px] font-medium text-foreground truncate text-center w-full leading-tight">
                               {rate.brand.split(' ')[0]}
                             </span>
-                            <span className="font-bold text-primary text-sm leading-tight">
+                            <span className="font-bold text-primary text-base leading-tight">
                               ₹{rate.price}
                             </span>
                           </div>
