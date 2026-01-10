@@ -239,26 +239,56 @@ export function SmartVoiceAssistant({ className, adminOnly = false }: SmartVoice
       if (currentParsed.intent === 'UPDATE_RATE' && currentParsed.items[0]) {
         const item = currentParsed.items[0];
         const today = new Date().toISOString().split('T')[0];
+        const category = item.category || 'sariya';
+        const brand = item.brand || '';
+        const size = item.size?.replace('mm', '') || null;
+        const price = currentParsed.financials?.amount || 0;
+        const unit = category === 'cement' ? 'bag' : 'kg';
         
-        // Upsert rate
-        const { error } = await supabase
+        // First check if rate exists for today
+        let query = supabase
           .from('daily_rates')
-          .upsert({
-            category: item.category || 'sariya',
-            brand: item.brand || '',
-            size: item.size?.replace('mm', '') || null,
-            price: currentParsed.financials?.amount || 0,
-            unit: item.category === 'cement' ? 'bag' : 'kg',
-            rate_date: today,
-          }, {
-            onConflict: 'category,brand,size,rate_date',
-          });
+          .select('id')
+          .eq('category', category)
+          .ilike('brand', brand)
+          .eq('rate_date', today);
+        
+        if (size) {
+          query = query.eq('size', size);
+        } else {
+          query = query.is('size', null);
+        }
+        
+        const { data: existing } = await query.maybeSingle();
+        
+        let error;
+        if (existing) {
+          // Update existing rate
+          const result = await supabase
+            .from('daily_rates')
+            .update({ price, updated_at: new Date().toISOString() })
+            .eq('id', existing.id);
+          error = result.error;
+        } else {
+          // Insert new rate
+          const result = await supabase
+            .from('daily_rates')
+            .insert({
+              category,
+              brand,
+              size,
+              price,
+              unit,
+              rate_date: today,
+            });
+          error = result.error;
+        }
         
         if (error) throw error;
         
         toast.success(t(
-          `Rate updated: ${item.brand} ${item.size || ''} → ₹${currentParsed.financials?.amount}`,
-          `रेट अपडेट: ${item.brand} ${item.size || ''} → ₹${currentParsed.financials?.amount}`
+          `Rate updated: ${brand} ${size || ''} → ₹${price}`,
+          `रेट अपडेट: ${brand} ${size || ''} → ₹${price}`
         ));
         
         queryClient.invalidateQueries({ queryKey: ['daily_rates'] });
