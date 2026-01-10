@@ -61,11 +61,6 @@ export function SmartVoiceAssistant({ className, adminOnly = false }: SmartVoice
     };
   }, []);
 
-  // Don't render if adminOnly and user is not admin
-  if (adminOnly && !isAdmin) {
-    return null;
-  }
-
   const handleVoiceResult = useCallback(async (text: string) => {
     setIsListening(false);
     setIsProcessing(true);
@@ -216,10 +211,8 @@ export function SmartVoiceAssistant({ className, adminOnly = false }: SmartVoice
         
         // Set a 10 second timeout - auto stop if user doesn't speak
         timeoutRef.current = setTimeout(() => {
-          if (isListening) {
-            toast.info(t('Listening timed out. Tap mic to try again.', 'सुनना समाप्त। फिर से माइक दबाएं।'));
-            stopListening();
-          }
+          toast.info(t('Listening timed out. Tap mic to try again.', 'सुनना समाप्त। फिर से माइक दबाएं।'));
+          stopListening();
         }, 10000);
         
       } catch (err) {
@@ -229,7 +222,12 @@ export function SmartVoiceAssistant({ className, adminOnly = false }: SmartVoice
     } else {
       setIsListening(false);
     }
-  }, [handleVoiceResult, handleVoiceError, t, isListening, stopListening]);
+  }, [handleVoiceResult, handleVoiceError, t, stopListening]);
+
+  // Don't render if adminOnly and user is not admin - MUST be after all hooks
+  if (adminOnly && !isAdmin) {
+    return null;
+  }
 
   const handleConfirm = async () => {
     if (!currentDraft || !currentParsed) return;
