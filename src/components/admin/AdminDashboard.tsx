@@ -16,13 +16,15 @@ import {
   Phone,
   Activity,
   Receipt,
-  ShoppingBag
+  ShoppingBag,
+  Eye
 } from 'lucide-react';
 import { useProducts, useCategories } from '@/hooks/useProducts';
 import { useProductStocks } from '@/hooks/useProductStocks';
 import { useCustomers } from '@/hooks/useCustomers';
 import { useMemo, useState } from 'react';
 import { CustomerDetailDrawer, TallyCustomer } from './CustomerDetailDrawer';
+import { RateSlider } from '@/components/home/RateSlider';
 
 // Stock data from Excel (extracted values)
 const STOCK_DATA = {
@@ -296,6 +298,26 @@ export function AdminDashboard() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Banner Preview Section */}
+        <Card>
+          <CardHeader className="pb-2 pt-3 px-3">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-sm flex items-center gap-2">
+                <Eye className="h-4 w-4 text-primary" />
+                {t('Rate Banner Preview', 'रेट बैनर प्रीव्यू')}
+              </CardTitle>
+              <Link to="/rates">
+                <Button variant="outline" size="sm" className="h-6 text-[10px]">
+                  {t('Edit Rates', 'रेट संपादित करें')}
+                </Button>
+              </Link>
+            </div>
+          </CardHeader>
+          <CardContent className="px-3 pb-3">
+            <RateSlider />
+          </CardContent>
+        </Card>
 
         {/* SECTION A: Top Customers - Outstanding */}
         <Card>
