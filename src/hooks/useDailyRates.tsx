@@ -93,7 +93,7 @@ export function useUpdateDailyRate() {
       brand, 
       size, 
       price, 
-      unit = 'kg' 
+      unit 
     }: { 
       category: string; 
       brand: string; 
@@ -103,12 +103,18 @@ export function useUpdateDailyRate() {
     }) => {
       const today = new Date().toISOString().split('T')[0];
       
+      // CRITICAL: Normalize category to lowercase (DB has check constraint)
+      const categoryNormalized = category.toLowerCase();
+      
+      // Auto-set unit based on category if not provided
+      const unitNormalized = unit || (categoryNormalized === 'cement' ? 'bag' : 'kg');
+      
       // Try to update existing rate first
       const { data: existing } = await supabase
         .from('daily_rates')
         .select('id')
         .eq('rate_date', today)
-        .eq('category', category)
+        .eq('category', categoryNormalized)
         .eq('brand', brand)
         .eq('size', size || '')
         .maybeSingle();
@@ -127,11 +133,11 @@ export function useUpdateDailyRate() {
         const { data, error } = await supabase
           .from('daily_rates')
           .insert({
-            category,
+            category: categoryNormalized,
             brand,
             size: size || null,
             price,
-            unit,
+            unit: unitNormalized,
             rate_date: today,
           })
           .select()
