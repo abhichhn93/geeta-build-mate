@@ -83,7 +83,6 @@ export function RateSlider() {
     }
     
     return date.toLocaleDateString(language === 'hi' ? 'hi-IN' : 'en-IN', {
-      weekday: 'short',
       day: 'numeric',
       month: 'short',
     });
@@ -92,12 +91,12 @@ export function RateSlider() {
   if (isLoading) {
     return (
       <Card className="overflow-hidden shadow-md border-primary/20">
-        <CardContent className="p-4">
-          <div className="animate-pulse space-y-3">
-            <div className="h-6 w-32 rounded bg-muted" />
-            <div className="grid grid-cols-3 gap-2">
-              {[1, 2, 3, 4, 5, 6].map(i => (
-                <div key={i} className="h-10 rounded-lg bg-muted" />
+        <CardContent className="p-3">
+          <div className="animate-pulse space-y-2">
+            <div className="h-4 w-24 rounded bg-muted" />
+            <div className="grid grid-cols-4 gap-1.5">
+              {[1, 2, 3, 4].map(i => (
+                <div key={i} className="h-10 rounded bg-muted" />
               ))}
             </div>
           </div>
@@ -109,14 +108,14 @@ export function RateSlider() {
   if (slides.length === 0) {
     return (
       <Card className="overflow-hidden shadow-md border-primary/20">
-        <CardContent className="py-6 text-center">
-          <TrendingUp className="h-8 w-8 text-muted-foreground/40 mx-auto mb-2" />
-          <p className="text-sm text-muted-foreground">
+        <CardContent className="py-4 text-center">
+          <TrendingUp className="h-6 w-6 text-muted-foreground/40 mx-auto mb-1" />
+          <p className="text-xs text-muted-foreground">
             {t('No rates available', 'रेट उपलब्ध नहीं')}
           </p>
           {isAdmin && (
             <Link to="/rates">
-              <Button variant="outline" size="sm" className="mt-3">
+              <Button variant="outline" size="sm" className="mt-2 h-6 text-[10px]">
                 {t('Add Rates', 'रेट जोड़ें')}
               </Button>
             </Link>
@@ -130,81 +129,81 @@ export function RateSlider() {
 
   return (
     <Card className="overflow-hidden shadow-md border-primary/20">
-      <CardHeader className="border-b bg-gradient-to-r from-primary/10 to-primary/5 pb-2 pt-3 px-3">
+      <CardHeader className="border-b bg-gradient-to-r from-primary/10 to-primary/5 py-2 px-3">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
             {current.type === 'tmt' ? (
-              <CircleDot className="h-4 w-4 text-primary" />
+              <CircleDot className="h-3.5 w-3.5 text-primary" />
             ) : (
-              <Box className="h-4 w-4 text-primary" />
+              <Box className="h-3.5 w-3.5 text-primary" />
             )}
-            <CardTitle className="text-sm">
+            <CardTitle className="text-xs">
               {current.type === 'tmt' 
-                ? t('TMT Sariya Rates', 'टीएमटी सरिया रेट')
-                : t('Cement Rates', 'सीमेंट रेट')
+                ? t('TMT Sariya', 'सरिया रेट')
+                : t('Cement', 'सीमेंट')
               }
             </CardTitle>
-            <span className="text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
+            <span className="text-[9px] text-muted-foreground bg-muted px-1 py-0.5 rounded">
               {rateDate ? formatRateDate(rateDate) : t("Today", 'आज')}
             </span>
           </div>
           <div className="flex items-center gap-1">
             <Button
               size="sm"
-              variant="outline"
-              className="h-7 gap-1 text-[10px] border-primary/30 hover:bg-primary/10"
+              variant="ghost"
+              className="h-6 w-6 p-0"
               onClick={handleShareRates}
             >
               <Share2 className="h-3 w-3" />
-              {t('Share', 'शेयर')}
             </Button>
           </div>
         </div>
       </CardHeader>
       
-      <CardContent className="p-3 relative">
-        {/* Navigation Arrows - Only show if multiple slides */}
+      <CardContent className="p-2 relative">
+        {/* Navigation Arrows */}
         {slides.length > 1 && (
           <>
             <button
               onClick={prevSlide}
-              className="absolute left-1 top-1/2 -translate-y-1/2 z-10 p-1 rounded-full bg-background/80 shadow-md hover:bg-background"
+              className="absolute left-0 top-1/2 -translate-y-1/2 z-10 p-0.5 rounded-full bg-background/80 shadow hover:bg-background"
             >
-              <ChevronLeft className="h-4 w-4 text-foreground" />
+              <ChevronLeft className="h-3 w-3 text-foreground" />
             </button>
             <button
               onClick={nextSlide}
-              className="absolute right-1 top-1/2 -translate-y-1/2 z-10 p-1 rounded-full bg-background/80 shadow-md hover:bg-background"
+              className="absolute right-0 top-1/2 -translate-y-1/2 z-10 p-0.5 rounded-full bg-background/80 shadow hover:bg-background"
             >
-              <ChevronRight className="h-4 w-4 text-foreground" />
+              <ChevronRight className="h-3 w-3 text-foreground" />
             </button>
           </>
         )}
 
-        {/* Rate Content with animation */}
-        <div className="overflow-hidden">
+        {/* Rate Content - Compact Grid */}
+        <div className="overflow-hidden px-3">
           <div 
             className="transition-transform duration-500 ease-in-out"
             style={{ transform: `translateX(-${currentSlide * 100}%)` }}
           >
             <div className="flex">
-              {slides.map((slide, index) => (
-                <div key={slide.type} className="w-full flex-shrink-0 px-4">
+              {slides.map((slide) => (
+                <div key={slide.type} className="w-full flex-shrink-0">
                   {slide.type === 'tmt' ? (
                     <div>
-                      <div className="text-[10px] text-muted-foreground mb-2 text-center">
+                      <div className="text-[9px] text-muted-foreground mb-1 text-center">
                         ₹/{t('kg', 'किग्रा')}
                       </div>
-                      <div className="grid grid-cols-3 gap-2">
-                        {slide.rates.map((rate) => (
+                      {/* Compact 2-row grid for TMT - 4-5 columns */}
+                      <div className="grid grid-cols-5 gap-1">
+                        {slide.rates.slice(0, 10).map((rate) => (
                           <div
                             key={rate.id}
-                            className="flex flex-col items-center justify-center rounded-lg border bg-muted/30 px-2 py-2"
+                            className="flex flex-col items-center justify-center rounded border bg-muted/30 px-1 py-1"
                           >
-                            <span className="text-[10px] font-medium text-foreground truncate text-center w-full">
-                              {rate.brand}
+                            <span className="text-[8px] font-medium text-foreground truncate text-center w-full leading-tight">
+                              {rate.brand.split(' ')[0]}
                             </span>
-                            <span className="font-bold text-primary text-lg">
+                            <span className="font-bold text-primary text-sm leading-tight">
                               ₹{rate.price}
                             </span>
                           </div>
@@ -213,19 +212,20 @@ export function RateSlider() {
                     </div>
                   ) : (
                     <div>
-                      <div className="text-[10px] text-muted-foreground mb-2 text-center">
+                      <div className="text-[9px] text-muted-foreground mb-1 text-center">
                         ₹/{t('bag', 'बैग')}
                       </div>
-                      <div className="grid grid-cols-2 gap-2">
-                        {slide.rates.map((rate) => (
+                      {/* Compact single row for Cement */}
+                      <div className="grid grid-cols-4 gap-1">
+                        {slide.rates.slice(0, 4).map((rate) => (
                           <div
                             key={rate.id}
-                            className="flex flex-col items-center justify-center rounded-lg border bg-muted/30 px-3 py-2"
+                            className="flex flex-col items-center justify-center rounded border bg-muted/30 px-1 py-1"
                           >
-                            <span className="text-xs font-medium text-foreground truncate text-center w-full">
+                            <span className="text-[8px] font-medium text-foreground truncate text-center w-full leading-tight">
                               {rate.brand}
                             </span>
-                            <span className="font-bold text-primary text-xl">
+                            <span className="font-bold text-primary text-sm leading-tight">
                               ₹{rate.price}
                             </span>
                           </div>
@@ -239,31 +239,31 @@ export function RateSlider() {
           </div>
         </div>
 
-        {/* Dot indicators */}
-        {slides.length > 1 && (
-          <div className="flex justify-center gap-2 mt-3">
-            {slides.map((slide, index) => (
-              <button
-                key={slide.type}
-                onClick={() => setCurrentSlide(index)}
-                className={`h-1.5 rounded-full transition-all duration-300 ${
-                  index === currentSlide 
-                    ? 'w-4 bg-primary' 
-                    : 'w-1.5 bg-muted-foreground/30 hover:bg-muted-foreground/50'
-                }`}
-              />
-            ))}
-          </div>
-        )}
-
-        {/* Admin link */}
-        {isAdmin && (
-          <Link to="/rates" className="block mt-3">
-            <Button variant="outline" size="sm" className="w-full text-[10px] h-7">
-              {t('Manage Rates', 'रेट प्रबंधन')}
-            </Button>
-          </Link>
-        )}
+        {/* Dot indicators + Admin link inline */}
+        <div className="flex items-center justify-center gap-2 mt-2">
+          {slides.length > 1 && (
+            <div className="flex gap-1">
+              {slides.map((slide, index) => (
+                <button
+                  key={slide.type}
+                  onClick={() => setCurrentSlide(index)}
+                  className={`h-1 rounded-full transition-all ${
+                    index === currentSlide 
+                      ? 'w-3 bg-primary' 
+                      : 'w-1 bg-muted-foreground/30'
+                  }`}
+                />
+              ))}
+            </div>
+          )}
+          {isAdmin && (
+            <Link to="/rates">
+              <Button variant="ghost" size="sm" className="h-5 text-[9px] px-2">
+                {t('Edit', 'संपादित')}
+              </Button>
+            </Link>
+          )}
+        </div>
       </CardContent>
     </Card>
   );
