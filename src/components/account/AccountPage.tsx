@@ -1,14 +1,23 @@
+import { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useLanguage } from '@/hooks/useLanguage';
 import { useTheme } from '@/hooks/useTheme';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, LogOut, User, Phone, Mail, Shield, Check, TrendingUp } from 'lucide-react';
+import { ArrowLeft, LogOut, User, Phone, Mail, Shield, Check, TrendingUp, Key, Loader2 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
 import { UPIQRUpload } from '@/components/settings/UPIQRUpload';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 export function AccountPage() {
+  const [showPasswordChange, setShowPasswordChange] = useState(false);
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
   const { user, role, isAdmin, signOut } = useAuth();
   const { language, t } = useLanguage();
   const { theme, setTheme, themes } = useTheme();
@@ -17,6 +26,32 @@ export function AccountPage() {
   const handleSignOut = async () => {
     await signOut();
     navigate('/');
+  };
+
+  const handlePasswordChange = async () => {
+    if (newPassword.length < 6) {
+      toast.error(t('Password must be at least 6 characters', 'पासवर्ड कम से कम 6 अक्षर का होना चाहिए'));
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      toast.error(t('Passwords do not match', 'पासवर्ड मेल नहीं खाते'));
+      return;
+    }
+
+    setIsChangingPassword(true);
+    try {
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
+      if (error) throw error;
+      
+      toast.success(t('Password changed successfully!', 'पासवर्ड सफलतापूर्वक बदल दिया गया!'));
+      setShowPasswordChange(false);
+      setNewPassword('');
+      setConfirmPassword('');
+    } catch (error: any) {
+      toast.error(error.message || t('Failed to change password', 'पासवर्ड बदलने में विफल'));
+    } finally {
+      setIsChangingPassword(false);
+    }
   };
 
   if (!user) {
@@ -90,7 +125,83 @@ export function AccountPage() {
           </CardContent>
         </Card>
 
-        {/* Theme Selector (Admin only) */}
+        {/* Change Password Card */}
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-sm">
+              <Key className="h-4 w-4" />
+              {t('Security', 'सुरक्षा')}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {!showPasswordChange ? (
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="w-full"
+                onClick={() => setShowPasswordChange(true)}
+              >
+                <Key className="mr-2 h-3.5 w-3.5" />
+                {t('Change Password', 'पासवर्ड बदलें')}
+              </Button>
+            ) : (
+              <div className="space-y-3">
+                <div className="space-y-1.5">
+                  <Label htmlFor="new-password" className="text-xs">
+                    {t('New Password', 'नया पासवर्ड')}
+                  </Label>
+                  <Input
+                    id="new-password"
+                    type="password"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    placeholder="••••••••"
+                    className="h-9 text-sm"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="confirm-password" className="text-xs">
+                    {t('Confirm Password', 'पासवर्ड पुष्टि करें')}
+                  </Label>
+                  <Input
+                    id="confirm-password"
+                    type="password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    placeholder="••••••••"
+                    className="h-9 text-sm"
+                  />
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex-1"
+                    onClick={() => {
+                      setShowPasswordChange(false);
+                      setNewPassword('');
+                      setConfirmPassword('');
+                    }}
+                  >
+                    {t('Cancel', 'रद्द करें')}
+                  </Button>
+                  <Button
+                    size="sm"
+                    className="flex-1"
+                    onClick={handlePasswordChange}
+                    disabled={isChangingPassword}
+                  >
+                    {isChangingPassword ? (
+                      <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />
+                    ) : null}
+                    {t('Save', 'सेव करें')}
+                  </Button>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
         {isAdmin && (
           <Card>
             <CardHeader className="pb-3">
