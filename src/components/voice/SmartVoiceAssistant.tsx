@@ -1,6 +1,8 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
 import {
   Dialog,
   DialogContent,
@@ -41,6 +43,23 @@ export function SmartVoiceAssistant({ className, adminOnly = false }: SmartVoice
   const [currentDraft, setCurrentDraft] = useState<DraftCardRender | null>(null);
   const [currentParsed, setCurrentParsed] = useState<CanonicalParsedJSON | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+
+  // IMPORTANT: AI fallback costs credits; keep it OFF by default.
+  const [useAiFallback, setUseAiFallback] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem('voice_ai_fallback') === '1';
+    } catch {
+      return false;
+    }
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('voice_ai_fallback', useAiFallback ? '1' : '0');
+    } catch {
+      // ignore
+    }
+  }, [useAiFallback]);
   
   const recognitionRef = useRef<ReturnType<typeof createSpeechRecognition> | null>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -73,8 +92,8 @@ export function SmartVoiceAssistant({ className, adminOnly = false }: SmartVoice
       let parseSource: 'REGEX_RULE' | 'LLM_FALLBACK' = 'REGEX_RULE';
       let finalConfidence = confidence;
       
-      // If low confidence, try LLM fallback
-      if (confidence < 0.5) {
+      // If low confidence, optionally try AI fallback (costs credits)
+      if (useAiFallback && confidence < 0.5) {
         try {
           const { data, error } = await supabase.functions.invoke('ai-command-parser', {
             body: { rawInput: text },
@@ -496,6 +515,30 @@ export function SmartVoiceAssistant({ className, adminOnly = false }: SmartVoice
               {t('Draft Card', 'ड्राफ्ट कार्ड')}
             </DialogTitle>
           </DialogHeader>
+
+          {/* Sanity / cost toggle */}
+          <div className="flex items-center justify-between border-b border-border bg-card/50 px-4 py-2">
+            <div className="min-w-0">
+              <p className="text-xs font-medium text-foreground">
+                {t('Voice sanity mode', 'वॉइस sanity मोड')}
+              </p>
+              <p className="text-[10px] text-muted-foreground">
+                {useAiFallback
+                  ? t('AI fallback ON (uses credits)', 'AI fallback ON (क्रेडिट लगेगा)')
+                  : t('Rules only (no credits)', 'सिर्फ नियम (कोई क्रेडिट नहीं)')}
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <Label htmlFor="voice-ai-fallback" className="text-xs text-muted-foreground">
+                {t('AI', 'AI')}
+              </Label>
+              <Switch
+                id="voice-ai-fallback"
+                checked={useAiFallback}
+                onCheckedChange={setUseAiFallback}
+              />
+            </div>
+          </div>
           
           {currentDraft && (
             <DraftCard

@@ -100,6 +100,12 @@ export function DraftCard({
             {Math.round(draft.parse_confidence * 100)}%
           </span>
         </div>
+
+        <p className="mt-1 text-[10px] text-muted-foreground">
+          {draft.parse_source === 'LLM_FALLBACK'
+            ? t('Parser: AI fallback (uses credits)', 'Parser: AI fallback (क्रेडिट लगेगा)')
+            : t('Parser: Rules (no credits)', 'Parser: Rules (कोई क्रेडिट नहीं)')}
+        </p>
       </CardHeader>
       
       <CardContent className="space-y-4">

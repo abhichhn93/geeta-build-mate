@@ -25,6 +25,7 @@ import { useCustomers } from '@/hooks/useCustomers';
 import { useMemo, useState } from 'react';
 import { CustomerDetailDrawer, TallyCustomer } from './CustomerDetailDrawer';
 import { RateSlider } from '@/components/home/RateSlider';
+import { VoiceSanityCheckCard } from './VoiceSanityCheckCard';
 
 // Stock data from Excel (extracted values)
 const STOCK_DATA = {
@@ -318,6 +319,9 @@ export function AdminDashboard() {
             <RateSlider />
           </CardContent>
         </Card>
+
+        {/* Voice sanity check (no AI credits) */}
+        <VoiceSanityCheckCard />
 
         {/* SECTION A: Top Customers - Outstanding */}
         <Card>
