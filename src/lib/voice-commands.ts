@@ -122,20 +122,24 @@ export async function executeRateUpdate(command: ParsedCommand): Promise<Command
   }
 
   const today = new Date().toISOString().split('T')[0];
+  const categoryNormalized = (command.category || 'sariya').toLowerCase();
+  const sizeNormalized = command.size || null;
   
-  // Find matching rate
+  // Find matching rate - use ilike for case-insensitive category match
   let query = supabase
     .from('daily_rates')
     .select('*')
-    .eq('rate_date', today)
     .ilike('brand', `%${command.brand}%`)
-    .eq('category', command.category || 'sariya');
+    .ilike('category', categoryNormalized);
   
-  if (command.size) {
-    query = query.ilike('size', `%${command.size.replace('mm', '')}%`);
+  if (sizeNormalized) {
+    query = query.ilike('size', `%${sizeNormalized.replace('mm', '')}%`);
+  } else if (categoryNormalized === 'cement') {
+    // For cement without size, match null/empty size
+    query = query.or('size.is.null,size.eq.');
   }
   
-  const { data: rates, error } = await query;
+  const { data: rates, error } = await query.order('rate_date', { ascending: false }).limit(10);
   
   if (error) {
     return {
@@ -145,16 +149,36 @@ export async function executeRateUpdate(command: ParsedCommand): Promise<Command
     };
   }
   
+  // Helper to sync product price for cement brands
+  const syncProductPrice = async (brand: string, price: number) => {
+    // Only sync for cement products
+    if (categoryNormalized !== 'cement') return;
+    
+    // Find matching product by brand name
+    const { data: products } = await supabase
+      .from('products')
+      .select('id, name_en')
+      .ilike('name_en', `%${brand}%`)
+      .ilike('name_en', '%cement%');
+    
+    if (products && products.length > 0) {
+      await supabase
+        .from('products')
+        .update({ price, updated_at: new Date().toISOString() })
+        .in('id', products.map(p => p.id));
+    }
+  };
+  
   if (!rates || rates.length === 0) {
     // No existing rate, insert new one
     const { error: insertError } = await supabase
       .from('daily_rates')
       .insert({
-        category: command.category || 'sariya',
+        category: categoryNormalized,
         brand: command.brand,
-        size: command.size || null,
+        size: sizeNormalized,
         price: command.price,
-        unit: command.category === 'cement' ? 'bag' : 'kg',
+        unit: categoryNormalized === 'cement' ? 'bag' : 'kg',
         rate_date: today,
       });
     
@@ -166,42 +190,43 @@ export async function executeRateUpdate(command: ParsedCommand): Promise<Command
       };
     }
     
-    return {
-      success: true,
-      message: `New rate added: ${command.brand} ${command.size || ''} → ₹${command.price}`,
-      messageHi: `नया रेट जोड़ा: ${command.brand} ${command.size || ''} → ₹${command.price}`,
-    };
-  }
-  
-  if (rates.length === 1) {
-    // Exactly one match, update it
-    const { error: updateError } = await supabase
-      .from('daily_rates')
-      .update({ price: command.price, updated_at: new Date().toISOString() })
-      .eq('id', rates[0].id);
-    
-    if (updateError) {
-      return {
-        success: false,
-        message: `Update failed: ${updateError.message}`,
-        messageHi: `अपडेट में त्रुटि`,
-      };
-    }
+    // Sync product price
+    await syncProductPrice(command.brand, command.price);
     
     return {
       success: true,
-      message: `Rate updated: ${rates[0].brand} ${rates[0].size || ''} → ₹${command.price}`,
-      messageHi: `रेट अपडेट: ${rates[0].brand} ${rates[0].size || ''} → ₹${command.price}`,
+      message: `New rate added: ${command.brand} ${sizeNormalized || ''} → ₹${command.price}`,
+      messageHi: `नया रेट जोड़ा: ${command.brand} ${sizeNormalized || ''} → ₹${command.price}`,
     };
   }
   
-  // Multiple matches, need user selection
+  // Find exact match or most recent
+  const exactMatch = rates.find(r => 
+    r.brand.toLowerCase() === command.brand.toLowerCase() &&
+    (!sizeNormalized || r.size?.toLowerCase().includes(sizeNormalized.replace('mm', '').toLowerCase()))
+  ) || rates[0];
+  
+  // Update the rate
+  const { error: updateError } = await supabase
+    .from('daily_rates')
+    .update({ price: command.price, updated_at: new Date().toISOString() })
+    .eq('id', exactMatch.id);
+  
+  if (updateError) {
+    return {
+      success: false,
+      message: `Update failed: ${updateError.message}`,
+      messageHi: `अपडेट में त्रुटि`,
+    };
+  }
+  
+  // Sync product price
+  await syncProductPrice(exactMatch.brand, command.price);
+  
   return {
-    success: false,
-    message: `Multiple products found. Please select one.`,
-    messageHi: `कई प्रोडक्ट मिले। कृपया एक चुनें।`,
-    needsSelection: true,
-    options: rates,
+    success: true,
+    message: `Rate updated: ${exactMatch.brand} ${exactMatch.size || ''} → ₹${command.price}`,
+    messageHi: `रेट अपडेट: ${exactMatch.brand} ${exactMatch.size || ''} → ₹${command.price}`,
   };
 }
 
@@ -215,14 +240,15 @@ export async function executeRateQuery(command: ParsedCommand): Promise<CommandR
     };
   }
 
-  const today = new Date().toISOString().split('T')[0];
+  const categoryNormalized = (command.category || 'sariya').toLowerCase();
   
   let query = supabase
     .from('daily_rates')
     .select('*')
-    .eq('rate_date', today)
     .ilike('brand', `%${command.brand}%`)
-    .eq('category', command.category || 'sariya');
+    .ilike('category', categoryNormalized)
+    .order('rate_date', { ascending: false })
+    .limit(10);
   
   if (command.size) {
     query = query.ilike('size', `%${command.size.replace('mm', '')}%`);

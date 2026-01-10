@@ -103,6 +103,23 @@ export function RateManagementPage() {
     }
   };
 
+  // Sync product price for cement brands
+  const syncCementProductPrice = async (brand: string, price: number) => {
+    // Find matching product by brand name containing cement
+    const { data: products } = await supabase
+      .from('products')
+      .select('id, name_en')
+      .ilike('name_en', `%${brand}%`)
+      .ilike('name_en', '%cement%');
+    
+    if (products && products.length > 0) {
+      await supabase
+        .from('products')
+        .update({ price, updated_at: new Date().toISOString() })
+        .in('id', products.map(p => p.id));
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -115,6 +132,7 @@ export function RateManagementPage() {
     
     try {
       const today = new Date().toISOString().split('T')[0];
+      const priceNum = parseFloat(formData.price);
       
       if (editingId) {
         // Update existing
@@ -124,13 +142,19 @@ export function RateManagementPage() {
             category: formData.category,
             brand: formData.brand,
             size: formData.size || null,
-            price: parseFloat(formData.price),
+            price: priceNum,
             unit: formData.unit,
             updated_at: new Date().toISOString(),
           })
           .eq('id', editingId);
         
         if (error) throw error;
+        
+        // Sync cement product prices
+        if (formData.category === 'cement') {
+          await syncCementProductPrice(formData.brand, priceNum);
+        }
+        
         toast.success(t('Rate updated', 'रेट अपडेट किया'));
       } else {
         // Insert new
@@ -140,16 +164,23 @@ export function RateManagementPage() {
             category: formData.category,
             brand: formData.brand,
             size: formData.size || null,
-            price: parseFloat(formData.price),
+            price: priceNum,
             unit: formData.unit,
             rate_date: today,
           });
         
         if (error) throw error;
+        
+        // Sync cement product prices
+        if (formData.category === 'cement') {
+          await syncCementProductPrice(formData.brand, priceNum);
+        }
+        
         toast.success(t('Rate added', 'रेट जोड़ा'));
       }
       
       queryClient.invalidateQueries({ queryKey: ['daily_rates'] });
+      queryClient.invalidateQueries({ queryKey: ['products'] });
       setShowModal(false);
       setFormData(initialFormData);
       setEditingId(null);
