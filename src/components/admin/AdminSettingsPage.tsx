@@ -5,8 +5,8 @@ import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { 
   Package, Users, TrendingUp, Calculator, ScanLine, 
-  Settings, ShoppingCart, ClipboardList, LogOut, User, Key, 
-  Loader2, Pencil, Save, X, AlertTriangle, Mail, Phone, Shield
+  ShoppingCart, ClipboardList, LogOut, User, Key, 
+  Loader2, Pencil, Save, X, Mail, Phone, Shield
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ThemeSwitcher } from '@/components/layout/ThemeSwitcher';
@@ -16,17 +16,6 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from '@/components/ui/alert-dialog';
 
 const adminTools = [
   { to: '/products', icon: Package, label: 'Manage Products', labelHi: 'प्रोडक्ट्स प्रबंधन', desc: 'Add, edit, delete products', descHi: 'प्रोडक्ट जोड़ें, बदलें, हटाएं' },
@@ -45,15 +34,11 @@ export function AdminSettingsPage() {
   const [editPhone, setEditPhone] = useState('');
   const [isSavingProfile, setIsSavingProfile] = useState(false);
 
-  // Password change state
-  const [showPasswordChange, setShowPasswordChange] = useState(false);
+  // Password change state (inline)
+  const [showPasswordFields, setShowPasswordFields] = useState(false);
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isChangingPassword, setIsChangingPassword] = useState(false);
-
-  // Account deletion state
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [deleteConfirmText, setDeleteConfirmText] = useState('');
 
   const { user, signOut, isAdmin, role } = useAuth();
   const { language } = useLanguage();
@@ -110,6 +95,9 @@ export function AdminSettingsPage() {
 
       toast.success(t('Profile updated successfully!', 'प्रोफाइल सफलतापूर्वक अपडेट हो गई!'));
       setIsEditingProfile(false);
+      setShowPasswordFields(false);
+      setNewPassword('');
+      setConfirmPassword('');
     } catch (error: any) {
       toast.error(error.message || t('Failed to update profile', 'प्रोफाइल अपडेट करने में विफल'));
     } finally {
@@ -133,32 +121,13 @@ export function AdminSettingsPage() {
       if (error) throw error;
       
       toast.success(t('Password changed successfully!', 'पासवर्ड सफलतापूर्वक बदल दिया गया!'));
-      setShowPasswordChange(false);
+      setShowPasswordFields(false);
       setNewPassword('');
       setConfirmPassword('');
     } catch (error: any) {
       toast.error(error.message || t('Failed to change password', 'पासवर्ड बदलने में विफल'));
     } finally {
       setIsChangingPassword(false);
-    }
-  };
-
-  const handleDeleteAccount = async () => {
-    if (deleteConfirmText !== 'DELETE') {
-      toast.error(t('Please type DELETE to confirm', 'कृपया पुष्टि के लिए DELETE टाइप करें'));
-      return;
-    }
-
-    setIsDeleting(true);
-    try {
-      await signOut();
-      toast.success(t('You have been signed out. Contact support to permanently delete your account.', 
-        'आप साइन आउट हो गए हैं। अपना खाता स्थायी रूप से हटाने के लिए सहायता से संपर्क करें।'));
-      navigate('/');
-    } catch (error: any) {
-      toast.error(error.message || t('Failed to process request', 'अनुरोध प्रोसेस करने में विफल'));
-    } finally {
-      setIsDeleting(false);
     }
   };
 
@@ -181,13 +150,13 @@ export function AdminSettingsPage() {
       </header>
 
       <div className="p-4 space-y-4">
-        {/* Profile Card */}
+        {/* Profile Card with inline password change */}
         <Card>
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
               <CardTitle className="flex items-center gap-2 text-sm">
                 <User className="h-4 w-4" />
-                {t('Profile', 'प्रोफाइल')}
+                {t('Account', 'खाता')}
               </CardTitle>
               {!isEditingProfile && (
                 <Button
@@ -261,20 +230,65 @@ export function AdminSettingsPage() {
                     className="h-9 text-sm"
                   />
                 </div>
-                <div className="space-y-1.5">
-                  <Label className="text-xs text-muted-foreground">
-                    {t('Email', 'ईमेल')}
-                  </Label>
-                  <Input
-                    type="email"
-                    value={user?.email || ''}
-                    disabled
-                    className="h-9 text-sm bg-muted"
-                  />
-                  <p className="text-[10px] text-muted-foreground">
-                    {t('Email cannot be changed', 'ईमेल बदला नहीं जा सकता')}
-                  </p>
-                </div>
+                
+                {/* Inline password change toggle */}
+                {!showPasswordFields ? (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="w-full justify-start text-xs text-muted-foreground"
+                    onClick={() => setShowPasswordFields(true)}
+                  >
+                    <Key className="mr-2 h-3.5 w-3.5" />
+                    {t('Change Password', 'पासवर्ड बदलें')}
+                  </Button>
+                ) : (
+                  <div className="space-y-2 rounded-lg border border-border p-2.5">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-medium">{t('Change Password', 'पासवर्ड बदलें')}</span>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 w-6 p-0"
+                        onClick={() => {
+                          setShowPasswordFields(false);
+                          setNewPassword('');
+                          setConfirmPassword('');
+                        }}
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
+                    <Input
+                      type="password"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      placeholder={t('New password', 'नया पासवर्ड')}
+                      className="h-8 text-sm"
+                    />
+                    <Input
+                      type="password"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      placeholder={t('Confirm password', 'पासवर्ड पुष्टि करें')}
+                      className="h-8 text-sm"
+                    />
+                    <Button
+                      size="sm"
+                      className="w-full h-8"
+                      onClick={handlePasswordChange}
+                      disabled={isChangingPassword || !newPassword || !confirmPassword}
+                    >
+                      {isChangingPassword ? (
+                        <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" />
+                      ) : (
+                        <Key className="mr-1 h-3.5 w-3.5" />
+                      )}
+                      {t('Update Password', 'पासवर्ड अपडेट करें')}
+                    </Button>
+                  </div>
+                )}
+
                 <div className="flex gap-2 pt-1">
                   <Button
                     variant="outline"
@@ -282,8 +296,11 @@ export function AdminSettingsPage() {
                     className="flex-1"
                     onClick={() => {
                       setIsEditingProfile(false);
+                      setShowPasswordFields(false);
                       setEditName(user?.user_metadata?.full_name || '');
                       setEditPhone(user?.user_metadata?.phone || '');
+                      setNewPassword('');
+                      setConfirmPassword('');
                     }}
                   >
                     <X className="mr-1 h-3.5 w-3.5" />
@@ -300,83 +317,6 @@ export function AdminSettingsPage() {
                     ) : (
                       <Save className="mr-1 h-3.5 w-3.5" />
                     )}
-                    {t('Save', 'सेव करें')}
-                  </Button>
-                </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Security Card - Password Change */}
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-2 text-sm">
-              <Key className="h-4 w-4" />
-              {t('Security', 'सुरक्षा')}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {!showPasswordChange ? (
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="w-full"
-                onClick={() => setShowPasswordChange(true)}
-              >
-                <Key className="mr-2 h-3.5 w-3.5" />
-                {t('Change Password', 'पासवर्ड बदलें')}
-              </Button>
-            ) : (
-              <div className="space-y-3">
-                <div className="space-y-1.5">
-                  <Label htmlFor="admin-new-password" className="text-xs">
-                    {t('New Password', 'नया पासवर्ड')}
-                  </Label>
-                  <Input
-                    id="admin-new-password"
-                    type="password"
-                    value={newPassword}
-                    onChange={(e) => setNewPassword(e.target.value)}
-                    placeholder="••••••••"
-                    className="h-9 text-sm"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="admin-confirm-password" className="text-xs">
-                    {t('Confirm Password', 'पासवर्ड पुष्टि करें')}
-                  </Label>
-                  <Input
-                    id="admin-confirm-password"
-                    type="password"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    placeholder="••••••••"
-                    className="h-9 text-sm"
-                  />
-                </div>
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="flex-1"
-                    onClick={() => {
-                      setShowPasswordChange(false);
-                      setNewPassword('');
-                      setConfirmPassword('');
-                    }}
-                  >
-                    {t('Cancel', 'रद्द करें')}
-                  </Button>
-                  <Button
-                    size="sm"
-                    className="flex-1"
-                    onClick={handlePasswordChange}
-                    disabled={isChangingPassword}
-                  >
-                    {isChangingPassword ? (
-                      <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />
-                    ) : null}
                     {t('Save', 'सेव करें')}
                   </Button>
                 </div>
@@ -417,71 +357,6 @@ export function AdminSettingsPage() {
                 </Card>
               ))}
             </div>
-          </CardContent>
-        </Card>
-
-        {/* Danger Zone */}
-        <Card className="border-destructive/30">
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-2 text-sm text-destructive">
-              <AlertTriangle className="h-4 w-4" />
-              {t('Danger Zone', 'खतरा क्षेत्र')}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="w-full text-destructive border-destructive/30 hover:bg-destructive/10"
-                >
-                  <AlertTriangle className="mr-2 h-3.5 w-3.5" />
-                  {t('Delete Account', 'खाता हटाएं')}
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>
-                    {t('Are you absolutely sure?', 'क्या आप बिल्कुल सुनिश्चित हैं?')}
-                  </AlertDialogTitle>
-                  <AlertDialogDescription>
-                    {t(
-                      'This action cannot be undone. This will permanently delete your account and remove your data from our servers.',
-                      'यह क्रिया पूर्ववत नहीं की जा सकती। यह आपके खाते को स्थायी रूप से हटा देगा और हमारे सर्वर से आपका डेटा हटा देगा।'
-                    )}
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <div className="py-3">
-                  <Label htmlFor="delete-confirm" className="text-xs">
-                    {t('Type DELETE to confirm', 'पुष्टि के लिए DELETE टाइप करें')}
-                  </Label>
-                  <Input
-                    id="delete-confirm"
-                    type="text"
-                    value={deleteConfirmText}
-                    onChange={(e) => setDeleteConfirmText(e.target.value)}
-                    placeholder="DELETE"
-                    className="mt-1.5 h-9 text-sm"
-                  />
-                </div>
-                <AlertDialogFooter>
-                  <AlertDialogCancel onClick={() => setDeleteConfirmText('')}>
-                    {t('Cancel', 'रद्द करें')}
-                  </AlertDialogCancel>
-                  <AlertDialogAction
-                    onClick={handleDeleteAccount}
-                    disabled={isDeleting || deleteConfirmText !== 'DELETE'}
-                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                  >
-                    {isDeleting ? (
-                      <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />
-                    ) : null}
-                    {t('Delete Account', 'खाता हटाएं')}
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
           </CardContent>
         </Card>
 
