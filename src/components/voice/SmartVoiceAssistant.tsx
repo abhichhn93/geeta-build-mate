@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import {
@@ -27,11 +27,12 @@ import { supabase } from '@/integrations/supabase/client';
 
 interface SmartVoiceAssistantProps {
   className?: string;
+  adminOnly?: boolean;
 }
 
-export function SmartVoiceAssistant({ className }: SmartVoiceAssistantProps) {
+export function SmartVoiceAssistant({ className, adminOnly = false }: SmartVoiceAssistantProps) {
   const { language } = useLanguage();
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const queryClient = useQueryClient();
   const t = (en: string, hi: string) => language === 'hi' ? hi : en;
   
@@ -40,6 +41,30 @@ export function SmartVoiceAssistant({ className }: SmartVoiceAssistantProps) {
   const [currentDraft, setCurrentDraft] = useState<DraftCardRender | null>(null);
   const [currentParsed, setCurrentParsed] = useState<CanonicalParsedJSON | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  
+  const recognitionRef = useRef<ReturnType<typeof createSpeechRecognition> | null>(null);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (recognitionRef.current) {
+        try {
+          recognitionRef.current.abort();
+        } catch (e) {
+          // ignore
+        }
+      }
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
+
+  // Don't render if adminOnly and user is not admin
+  if (adminOnly && !isAdmin) {
+    return null;
+  }
 
   const handleVoiceResult = useCallback(async (text: string) => {
     setIsListening(false);
@@ -125,30 +150,86 @@ export function SmartVoiceAssistant({ className }: SmartVoiceAssistantProps) {
     }
   }, [t]);
 
+  const stopListening = useCallback(() => {
+    if (recognitionRef.current) {
+      try {
+        recognitionRef.current.stop();
+      } catch (e) {
+        // ignore
+      }
+    }
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+    setIsListening(false);
+  }, []);
+
   const startListening = useCallback(() => {
     if (!isSpeechRecognitionSupported()) {
       toast.error(t('Voice not supported in this browser', 'इस ब्राउज़र में वॉइस सपोर्ट नहीं है'));
       return;
     }
 
+    // Abort any existing recognition
+    if (recognitionRef.current) {
+      try {
+        recognitionRef.current.abort();
+      } catch (e) {
+        // ignore
+      }
+    }
+
     setIsListening(true);
 
     const recognition = createSpeechRecognition(
-      handleVoiceResult,
-      handleVoiceError,
-      () => setIsListening(false),
+      (text) => {
+        // Clear timeout since we got a result
+        if (timeoutRef.current) {
+          clearTimeout(timeoutRef.current);
+          timeoutRef.current = null;
+        }
+        handleVoiceResult(text);
+      },
+      (error) => {
+        if (timeoutRef.current) {
+          clearTimeout(timeoutRef.current);
+          timeoutRef.current = null;
+        }
+        handleVoiceError(error);
+      },
+      () => {
+        if (timeoutRef.current) {
+          clearTimeout(timeoutRef.current);
+          timeoutRef.current = null;
+        }
+        setIsListening(false);
+      },
       'hi-IN'
     );
 
     if (recognition) {
+      recognitionRef.current = recognition;
+      
       try {
         recognition.start();
+        
+        // Set a 10 second timeout - auto stop if user doesn't speak
+        timeoutRef.current = setTimeout(() => {
+          if (isListening) {
+            toast.info(t('Listening timed out. Tap mic to try again.', 'सुनना समाप्त। फिर से माइक दबाएं।'));
+            stopListening();
+          }
+        }, 10000);
+        
       } catch (err) {
         setIsListening(false);
         toast.error(t('Failed to start voice', 'वॉइस शुरू नहीं हुई'));
       }
+    } else {
+      setIsListening(false);
     }
-  }, [handleVoiceResult, handleVoiceError, t]);
+  }, [handleVoiceResult, handleVoiceError, t, isListening, stopListening]);
 
   const handleConfirm = async () => {
     if (!currentDraft || !currentParsed) return;
@@ -289,7 +370,7 @@ export function SmartVoiceAssistant({ className }: SmartVoiceAssistantProps) {
                 ? 'bg-amber-500 hover:bg-amber-500/90'
                 : 'bg-gradient-to-br from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70'
             } ${className}`}
-            onClick={isListening ? () => setIsListening(false) : startListening}
+            onClick={isListening ? stopListening : startListening}
             disabled={isProcessing}
           >
             {isProcessing ? (
