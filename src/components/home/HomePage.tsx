@@ -15,9 +15,9 @@ export function HomePage() {
   const { t } = useLanguage();
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gradient-to-b from-sky-50 via-slate-50 to-white dark:from-slate-900 dark:via-slate-900 dark:to-slate-950">
       {/* Header - Compact */}
-      <header className="sticky top-0 z-40 border-b bg-card px-4 py-2 shadow-sm">
+      <header className="sticky top-0 z-40 border-b bg-white/80 backdrop-blur-sm px-4 py-2 shadow-sm dark:bg-slate-900/80">
         <div className="mx-auto flex max-w-lg items-center justify-between gap-2">
           <img 
             src={geetaTradersLogo} 
@@ -36,18 +36,14 @@ export function HomePage() {
         <RateSlider />
 
         {/* Categories Grid */}
-        <Card className="shadow-sm">
-          <CardHeader className="pb-2 pt-3 px-3">
-            <CardTitle className="text-sm">{t('Categories', 'श्रेणियाँ')}</CardTitle>
-          </CardHeader>
-          <CardContent className="px-3 pb-3">
-            <CategoryGrid />
-          </CardContent>
-        </Card>
+        <div className="space-y-2">
+          <h2 className="text-sm font-semibold text-foreground px-1">Categories</h2>
+          <CategoryGrid />
+        </div>
 
         {/* Login prompt for non-logged in users */}
         {!user && (
-          <Card className="border-dashed shadow-sm">
+          <Card className="border-dashed shadow-sm bg-white/70 dark:bg-slate-800/70">
             <CardContent className="py-4 text-center">
               <p className="text-xs text-muted-foreground">
                 {t('Login to place orders', 'ऑर्डर देने के लिए लॉगिन करें')}

@@ -93,36 +93,32 @@ export function CategoryGrid() {
         <Link
           key={category.id}
           to={category.link}
-          className={`group flex flex-col items-center gap-2 rounded-2xl bg-card p-2 text-center transition-all duration-200 active:scale-95 ${
-            category.highlight
-              ? 'ring-2 ring-primary/30 shadow-lg shadow-primary/10'
-              : 'shadow-md hover:shadow-lg'
-          }`}
+          className="group flex flex-col items-center gap-1.5 text-center transition-all duration-200 active:scale-95"
         >
-          {/* Image Container - Large rounded square */}
-          <div className={`flex h-[72px] w-[72px] items-center justify-center rounded-2xl overflow-hidden transition-transform duration-200 group-hover:scale-105 ${
+          {/* Image Container - Clean square, no inner box */}
+          <div className={`flex h-[72px] w-[72px] items-center justify-center rounded-2xl overflow-hidden transition-all duration-200 group-hover:scale-105 group-hover:shadow-lg ${
             category.highlight
-              ? 'bg-primary/10'
-              : 'bg-gradient-to-br from-slate-100 to-slate-50 dark:from-slate-800 dark:to-slate-700'
+              ? 'bg-primary/15 ring-2 ring-primary/30'
+              : 'bg-white shadow-md dark:bg-slate-800'
           }`}>
             {category.image ? (
               <img 
                 src={category.image} 
                 alt={category.nameEn}
-                className="h-14 w-14 object-contain drop-shadow-md"
+                className="h-full w-full object-contain p-2"
               />
             ) : (
               category.icon
             )}
           </div>
           
-          {/* Label */}
-          <div className="flex flex-col items-center gap-0.5">
-            <span className="text-sm font-semibold text-foreground leading-tight">
+          {/* Label - Outside the square */}
+          <div className="flex flex-col items-center">
+            <span className="text-xs font-semibold text-foreground leading-tight">
               {language === 'en' ? category.nameEn : category.nameHi}
             </span>
             {category.badge && (
-              <Badge variant="secondary" className="text-[9px] px-1.5 py-0 h-4">
+              <Badge variant="secondary" className="text-[8px] px-1 py-0 h-3.5 mt-0.5">
                 {language === 'en' ? category.badge.en : category.badge.hi}
               </Badge>
             )}
