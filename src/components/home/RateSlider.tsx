@@ -25,21 +25,16 @@ export function RateSlider() {
   const rateDate = ratesData?.date;
 
   // Filter rates by category
-  const tmtRates = rates.filter(r => 
-    r.category.toLowerCase() === 'sariya' || 
-    r.category.toLowerCase() === 'tmt' ||
-    r.category.toLowerCase().includes('tmt')
-  );
-  const cementRates = rates.filter(r => r.category.toLowerCase() === 'cement');
+  const tmtRates = rates.filter((r) => {
+    const c = r.category.toLowerCase();
+    return c === 'sariya' || c === 'tmt' || c.includes('tmt');
+  });
+  const cementRates = rates.filter((r) => r.category.toLowerCase() === 'cement');
 
   // Build slides based on available rates
-  const slides = [];
-  if (tmtRates.length > 0) {
-    slides.push({ type: 'tmt', rates: tmtRates });
-  }
-  if (cementRates.length > 0) {
-    slides.push({ type: 'cement', rates: cementRates });
-  }
+  const slides: Array<{ type: 'tmt' | 'cement'; rates: typeof rates }> = [];
+  if (tmtRates.length > 0) slides.push({ type: 'tmt', rates: tmtRates });
+  if (cementRates.length > 0) slides.push({ type: 'cement', rates: cementRates });
 
   // Auto-slide every 4 seconds
   useEffect(() => {
@@ -143,9 +138,17 @@ export function RateSlider() {
                 : t('Cement', 'सीमेंट')
               }
             </CardTitle>
-            <span className="text-[9px] text-muted-foreground bg-muted px-1 py-0.5 rounded">
-              {rateDate ? formatRateDate(rateDate) : t("Today", 'आज')}
-            </span>
+            {(() => {
+              const distinctDates = new Set(current.rates.map((r) => r.rate_date)).size;
+              const label = distinctDates > 1
+                ? t('Latest updates', 'लेटेस्ट अपडेट')
+                : (rateDate ? formatRateDate(rateDate) : t('Today', 'आज'));
+              return (
+                <span className="text-[9px] text-muted-foreground bg-muted px-1 py-0.5 rounded">
+                  {label}
+                </span>
+              );
+            })()}
           </div>
           <div className="flex items-center gap-1">
             <Button
@@ -187,50 +190,95 @@ export function RateSlider() {
           >
             <div className="flex">
               {slides.map((slide) => {
-                const itemCount = slide.rates.length;
-                // Calculate optimal columns based on item count
-                const getGridCols = (count: number) => {
-                  if (count <= 3) return 3;
-                  if (count <= 4) return 4;
-                  if (count <= 6) return 3;
-                  return 4;
+                const parseSize = (s: string | null) => {
+                  if (!s) return Number.POSITIVE_INFINITY;
+                  const m = s.match(/(\d+(?:\.\d+)?)/);
+                  return m ? Number(m[1]) : Number.POSITIVE_INFINITY;
                 };
-                const cols = getGridCols(itemCount);
-                const maxItems = slide.type === 'tmt' ? 12 : 8;
-                const displayItems = slide.rates.slice(0, maxItems);
-                
+
+                if (slide.type === 'tmt') {
+                  // Group by brand so we don't show multiple "duplicate" tiles per brand.
+                  const grouped = slide.rates.reduce<Record<string, typeof slide.rates>>((acc, r) => {
+                    (acc[r.brand] ||= []).push(r);
+                    return acc;
+                  }, {});
+
+                  const brandRows = Object.entries(grouped)
+                    .map(([brand, brandRates]) => ({
+                      brand,
+                      rates: [...brandRates].sort((a, b) => parseSize(a.size) - parseSize(b.size)),
+                    }))
+                    .sort((a, b) => a.brand.localeCompare(b.brand));
+
+                  const cols = brandRows.length >= 10 ? 5 : 4;
+
+                  return (
+                    <div key={slide.type} className="w-full flex-shrink-0">
+                      <div className="text-[9px] text-muted-foreground mb-1.5 text-center">
+                        ₹/{t('kg', 'किग्रा')}
+                      </div>
+
+                      <div className="max-h-44 overflow-y-auto pr-1">
+                        <div className={`grid gap-1.5 ${cols === 5 ? 'grid-cols-5' : 'grid-cols-4'}`}>
+                          {brandRows.map(({ brand, rates: brandRates }) => (
+                            <div
+                              key={brand}
+                              className="rounded-lg border bg-gradient-to-b from-background to-muted/30 px-1.5 py-1.5 shadow-sm"
+                            >
+                              <div className="text-[9px] font-semibold text-foreground truncate">
+                                {brand}
+                              </div>
+                              <div className="mt-1 space-y-0.5">
+                                {brandRates.slice(0, 4).map((r) => (
+                                  <div key={r.id} className="flex items-center justify-between text-[9px] leading-tight">
+                                    <span className="text-muted-foreground">{r.size || '-'}</span>
+                                    <span className="font-bold text-primary">₹{r.price}</span>
+                                  </div>
+                                ))}
+                                {brandRates.length > 4 && (
+                                  <div className="text-[9px] text-muted-foreground">…</div>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                }
+
+                // Cement (one tile per brand)
+                const cementByBrand = new Map<string, (typeof slide.rates)[number]>();
+                for (const r of slide.rates) {
+                  // Already latest-per-key, but keep it safe
+                  if (!cementByBrand.has(r.brand)) cementByBrand.set(r.brand, r);
+                }
+                const cementRows = Array.from(cementByBrand.values()).sort((a, b) => a.brand.localeCompare(b.brand));
+
+                const cols = cementRows.length >= 12 ? 5 : cementRows.length >= 8 ? 4 : 3;
+
                 return (
                   <div key={slide.type} className="w-full flex-shrink-0">
                     <div className="text-[9px] text-muted-foreground mb-1.5 text-center">
-                      ₹/{slide.type === 'tmt' ? t('kg', 'किग्रा') : t('bag', 'बैग')}
+                      ₹/{t('bag', 'बैग')}
                     </div>
-                    {/* Dynamic grid that auto-adjusts */}
-                    <div 
-                      className={`grid gap-1.5 ${
-                        itemCount <= 3 
-                          ? 'grid-cols-3 max-w-[75%] mx-auto' 
-                          : itemCount <= 4 
-                            ? 'grid-cols-4' 
-                            : cols === 3 
-                              ? 'grid-cols-3' 
-                              : 'grid-cols-4'
-                      }`}
-                    >
-                      {displayItems.map((rate) => (
-                        <div
-                          key={rate.id}
-                          className="flex flex-col items-center justify-center rounded-lg border bg-gradient-to-b from-white to-muted/20 dark:from-slate-800 dark:to-slate-800/50 px-1.5 py-1.5 shadow-sm"
-                        >
-                          <span className="text-[9px] font-medium text-foreground truncate text-center w-full leading-tight">
-                            {rate.brand.split(' ')[0]}
-                          </span>
-                          <span className={`font-bold text-primary leading-tight ${
-                            slide.type === 'tmt' ? 'text-base' : 'text-sm'
-                          }`}>
-                            ₹{rate.price}
-                          </span>
-                        </div>
-                      ))}
+
+                    <div className="max-h-44 overflow-y-auto pr-1">
+                      <div className={`grid gap-1.5 ${cols === 5 ? 'grid-cols-5' : cols === 4 ? 'grid-cols-4' : 'grid-cols-3'}`}>
+                        {cementRows.map((rate) => (
+                          <div
+                            key={rate.id}
+                            className="flex flex-col items-center justify-center rounded-lg border bg-gradient-to-b from-background to-muted/30 px-1.5 py-1.5 shadow-sm"
+                          >
+                            <span className="text-[9px] font-medium text-foreground truncate text-center w-full leading-tight">
+                              {rate.brand}
+                            </span>
+                            <span className="font-bold text-primary leading-tight text-sm">
+                              ₹{rate.price}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   </div>
                 );
