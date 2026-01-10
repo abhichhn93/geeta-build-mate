@@ -179,62 +179,62 @@ export function RateSlider() {
           </>
         )}
 
-        {/* Rate Content - Compact Grid */}
+        {/* Rate Content - Auto-adjusting Grid */}
         <div className="overflow-hidden px-3">
           <div 
             className="transition-transform duration-500 ease-in-out"
             style={{ transform: `translateX(-${currentSlide * 100}%)` }}
           >
             <div className="flex">
-              {slides.map((slide) => (
-                <div key={slide.type} className="w-full flex-shrink-0">
-                  {slide.type === 'tmt' ? (
-                    <div>
-                      <div className="text-[9px] text-muted-foreground mb-1.5 text-center">
-                        ₹/{t('kg', 'किग्रा')}
-                      </div>
-                      {/* 3-row grid for TMT - 4 columns */}
-                      <div className="grid grid-cols-4 gap-1.5">
-                        {slide.rates.slice(0, 12).map((rate) => (
-                          <div
-                            key={rate.id}
-                            className="flex flex-col items-center justify-center rounded-lg border bg-muted/30 px-1.5 py-1.5"
-                          >
-                            <span className="text-[9px] font-medium text-foreground truncate text-center w-full leading-tight">
-                              {rate.brand.split(' ')[0]}
-                            </span>
-                            <span className="font-bold text-primary text-base leading-tight">
-                              ₹{rate.price}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
+              {slides.map((slide) => {
+                const itemCount = slide.rates.length;
+                // Calculate optimal columns based on item count
+                const getGridCols = (count: number) => {
+                  if (count <= 3) return 3;
+                  if (count <= 4) return 4;
+                  if (count <= 6) return 3;
+                  return 4;
+                };
+                const cols = getGridCols(itemCount);
+                const maxItems = slide.type === 'tmt' ? 12 : 8;
+                const displayItems = slide.rates.slice(0, maxItems);
+                
+                return (
+                  <div key={slide.type} className="w-full flex-shrink-0">
+                    <div className="text-[9px] text-muted-foreground mb-1.5 text-center">
+                      ₹/{slide.type === 'tmt' ? t('kg', 'किग्रा') : t('bag', 'बैग')}
                     </div>
-                  ) : (
-                    <div>
-                      <div className="text-[9px] text-muted-foreground mb-1 text-center">
-                        ₹/{t('bag', 'बैग')}
-                      </div>
-                      {/* Compact single row for Cement */}
-                      <div className="grid grid-cols-4 gap-1">
-                        {slide.rates.slice(0, 4).map((rate) => (
-                          <div
-                            key={rate.id}
-                            className="flex flex-col items-center justify-center rounded border bg-muted/30 px-1 py-1"
-                          >
-                            <span className="text-[8px] font-medium text-foreground truncate text-center w-full leading-tight">
-                              {rate.brand}
-                            </span>
-                            <span className="font-bold text-primary text-sm leading-tight">
-                              ₹{rate.price}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
+                    {/* Dynamic grid that auto-adjusts */}
+                    <div 
+                      className={`grid gap-1.5 ${
+                        itemCount <= 3 
+                          ? 'grid-cols-3 max-w-[75%] mx-auto' 
+                          : itemCount <= 4 
+                            ? 'grid-cols-4' 
+                            : cols === 3 
+                              ? 'grid-cols-3' 
+                              : 'grid-cols-4'
+                      }`}
+                    >
+                      {displayItems.map((rate) => (
+                        <div
+                          key={rate.id}
+                          className="flex flex-col items-center justify-center rounded-lg border bg-gradient-to-b from-white to-muted/20 dark:from-slate-800 dark:to-slate-800/50 px-1.5 py-1.5 shadow-sm"
+                        >
+                          <span className="text-[9px] font-medium text-foreground truncate text-center w-full leading-tight">
+                            {rate.brand.split(' ')[0]}
+                          </span>
+                          <span className={`font-bold text-primary leading-tight ${
+                            slide.type === 'tmt' ? 'text-base' : 'text-sm'
+                          }`}>
+                            ₹{rate.price}
+                          </span>
+                        </div>
+                      ))}
                     </div>
-                  )}
-                </div>
-              ))}
+                  </div>
+                );
+              })}
             </div>
           </div>
         </div>
