@@ -70,8 +70,8 @@ export function HomePage() {
         )}
       </div>
 
-      {/* Voice Assistant - Available for all logged-in users */}
-      {user && <SmartVoiceAssistant />}
+      {/* Voice Assistant - Admin only */}
+      {user && <SmartVoiceAssistant adminOnly />}
     </div>
   );
 }
