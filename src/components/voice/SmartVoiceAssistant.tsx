@@ -239,10 +239,12 @@ export function SmartVoiceAssistant({ className, adminOnly = false }: SmartVoice
       if (currentParsed.intent === 'UPDATE_RATE' && currentParsed.items[0]) {
         const item = currentParsed.items[0];
         const today = new Date().toISOString().split('T')[0];
-        const category = item.category || 'sariya';
+        // CRITICAL: Always lowercase the category to match DB check constraint
+        const category = (item.category || 'sariya').toLowerCase();
         const brand = item.brand || '';
         const size = item.size?.replace('mm', '') || null;
         const price = currentParsed.financials?.amount || 0;
+        // Auto-set unit based on category
         const unit = category === 'cement' ? 'bag' : 'kg';
         
         // First check if rate exists for today
@@ -285,6 +287,31 @@ export function SmartVoiceAssistant({ className, adminOnly = false }: SmartVoice
         }
         
         if (error) throw error;
+        
+        // Also sync product price for cement
+        if (category === 'cement') {
+          const { data: products } = await supabase
+            .from('products')
+            .select('id, name_en')
+            .ilike('name_en', `%${brand}%`)
+            .ilike('name_en', '%cement%');
+          
+          if (products && products.length > 0) {
+            await supabase
+              .from('products')
+              .update({ price, updated_at: new Date().toISOString() })
+              .in('id', products.map(p => p.id));
+            
+            queryClient.invalidateQueries({ queryKey: ['products'] });
+          }
+        }
+        
+        toast.success(t(
+          `Rate updated: ${brand} ${size || ''} → ₹${price}`,
+          `रेट अपडेट: ${brand} ${size || ''} → ₹${price}`
+        ));
+        
+        queryClient.invalidateQueries({ queryKey: ['daily_rates'] });
         
         toast.success(t(
           `Rate updated: ${brand} ${size || ''} → ₹${price}`,
