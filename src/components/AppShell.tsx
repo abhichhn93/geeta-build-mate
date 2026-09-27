@@ -1,7 +1,9 @@
 import { NavLink, Outlet } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import { ClipboardList, IndianRupee, Send, Users } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/lib/supabase";
 import logo from "@/assets/logo-mark.png";
 
 const tabs = [
@@ -11,8 +13,16 @@ const tabs = [
   { to: "/customers", hi: "ग्राहक", en: "Customers", icon: Users },
 ];
 
+async function fetchNewOrderCount() {
+  const { count, error } = await supabase.from("orders").select("id", { count: "exact", head: true }).eq("status", "new");
+  if (error) throw error;
+  return count ?? 0;
+}
+
 const AppShell = () => {
   const { t, toggle } = useI18n();
+  // Polls rather than realtime — a shop with a handful of orders/day doesn't need a socket.
+  const { data: newOrders } = useQuery({ queryKey: ["new-orders-count"], queryFn: fetchNewOrderCount, refetchInterval: 30_000 });
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -54,7 +64,14 @@ const AppShell = () => {
                 )
               }
             >
-              <Icon className="h-6 w-6" />
+              <span className="relative">
+                <Icon className="h-6 w-6" />
+                {to === "/orders" && !!newOrders && (
+                  <span className="absolute -top-1 -right-2 min-w-[16px] h-4 px-1 rounded-full bg-destructive text-destructive-foreground text-[10px] leading-4 text-center font-semibold">
+                    {newOrders}
+                  </span>
+                )}
+              </span>
               {t(hi, en)}
             </NavLink>
           ))}
