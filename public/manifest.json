@@ -1,10 +1,10 @@
 {
-  "name": "Geeta Traders",
-  "short_name": "Geeta Traders",
+  "name": "गीता ट्रेडर्स",
+  "short_name": "गीता ट्रेडर्स",
   "description": "Building Materials - TMT Sariya, Cement & More",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#ffffff",
+  "background_color": "#f7f7f7",
   "theme_color": "#0d9488",
   "orientation": "portrait",
   "icons": [
@@ -19,5 +19,6 @@
       "sizes": "192x192",
       "type": "image/png"
     }
-  ]
+  ],
+  "lang": "hi"
 }

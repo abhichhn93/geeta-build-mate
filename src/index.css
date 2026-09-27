@@ -206,6 +206,7 @@
 
   body {
     @apply bg-background text-foreground antialiased;
+    font-size: 16px; /* Devanagari stays readable; never below 15px */
     font-feature-settings: "rlig" 1, "calt" 1;
     -webkit-tap-highlight-color: transparent;
   }
@@ -234,12 +235,6 @@
   }
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
-  }
-}
-
-@media all and (display-mode: standalone) {
-  body {
-    @apply safe-top;
   }
 }
 
