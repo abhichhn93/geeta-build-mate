@@ -13,7 +13,7 @@ document is silent, prefer the simplest thing that works.
 | Keep from old app | `src/assets/products/*.png` (20 files), `src/assets/geeta-traders-logo.png`, `tailwind.config.ts`, the CSS variables in `src/index.css`, installed shadcn components |
 | Stack | Vite + React + TS + Tailwind + shadcn/ui + Supabase free + Vercel free |
 | Language | **Hindi default**, English toggle in header |
-| Admin auth | Supabase magic link, session persists indefinitely. No password, no login screen after first time. |
+| Admin auth | Supabase email + password (changed from magic link: free tier cannot add an OTP code to the email, and links open Safari not the iOS PWA). Session persists indefinitely; no login screen after first time. Signup disabled; accounts made in dashboard. |
 | Customer auth | None. Token in URL. |
 | Stock | `is_available` boolean only. **Do not create any quantity field.** |
 | Screens | 4 admin (Rates / Send / Orders / Customers) + 1 public order page |

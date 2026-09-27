@@ -8,37 +8,23 @@ import { useI18n } from "@/lib/i18n";
 import logo from "@/assets/geeta-traders-logo.png";
 
 /**
- * One-time admin login. The email carries both a link and a 6-digit code.
- * The code matters on iPhone: a home-screen PWA doesn't share storage with Safari,
- * so tapping the link would log in Safari, not the installed app.
+ * One-time admin login with email + password. The session then persists indefinitely.
+ * Not a magic link: free-tier Supabase can't customise the email to include a code, and a
+ * link opens Safari rather than the installed iPhone PWA (separate storage).
+ * Accounts are created in the Supabase dashboard; public signup is disabled.
  */
 const Login = () => {
   const { t, toggle } = useI18n();
   const [email, setEmail] = useState("");
-  const [code, setCode] = useState("");
-  const [sent, setSent] = useState(false);
+  const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
 
-  const sendCode = async () => {
+  const login = async (e: React.FormEvent) => {
+    e.preventDefault();
     setBusy(true);
-    const { error } = await supabase.auth.signInWithOtp({
-      email: email.trim(),
-      options: { emailRedirectTo: window.location.origin, shouldCreateUser: false },
-    });
+    const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
     setBusy(false);
-    if (error) {
-      toast.error(t("ईमेल नहीं भेजा जा सका", "Could not send email"), { description: error.message });
-      return;
-    }
-    setSent(true);
-    toast.success(t("ईमेल भेज दिया गया", "Email sent"));
-  };
-
-  const verify = async () => {
-    setBusy(true);
-    const { error } = await supabase.auth.verifyOtp({ email: email.trim(), token: code.trim(), type: "email" });
-    setBusy(false);
-    if (error) toast.error(t("कोड गलत है", "Wrong code"), { description: error.message });
+    if (error) toast.error(t("लॉगिन नहीं हुआ", "Login failed"), { description: error.message });
   };
 
   return (
@@ -49,45 +35,29 @@ const Login = () => {
       <img src={logo} alt="" className="h-20 w-20 rounded-2xl" />
       <h1 className="text-2xl font-semibold">{t("गीता ट्रेडर्स", "Geeta Traders")}</h1>
 
-      <div className="w-full max-w-sm space-y-3">
+      <form onSubmit={login} className="w-full max-w-sm space-y-3">
         <Input
           type="email"
           inputMode="email"
           autoComplete="email"
-          placeholder={t("आपका ईमेल", "Your email")}
+          placeholder={t("ईमेल", "Email")}
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          disabled={sent}
           className="h-12 text-base"
         />
-
-        {sent && (
-          <Input
-            inputMode="numeric"
-            autoComplete="one-time-code"
-            placeholder={t("ईमेल में आया कोड", "Code from email")}
-            value={code}
-            onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
-            maxLength={8}
-            className="h-12 text-base tracking-widest text-center"
-          />
-        )}
-
-        <Button
-          className="w-full h-12 text-base"
-          disabled={busy || !email.includes("@") || (sent && code.length < 6)}
-          onClick={sent ? verify : sendCode}
-        >
+        <Input
+          type="password"
+          autoComplete="current-password"
+          placeholder={t("पासवर्ड", "Password")}
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          className="h-12 text-base"
+        />
+        <Button type="submit" className="w-full h-12 text-base" disabled={busy || !email.includes("@") || !password}>
           {busy && <Loader2 className="h-4 w-4 animate-spin" />}
-          {sent ? t("लॉगिन करें", "Log in") : t("कोड भेजें", "Send code")}
+          {t("लॉगिन करें", "Log in")}
         </Button>
-
-        {sent && (
-          <button onClick={() => { setSent(false); setCode(""); }} className="w-full text-sm text-muted-foreground min-h-11">
-            {t("दूसरा ईमेल डालें", "Use a different email")}
-          </button>
-        )}
-      </div>
+      </form>
     </div>
   );
 };
