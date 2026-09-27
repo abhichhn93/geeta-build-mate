@@ -2,7 +2,7 @@ import { NavLink, Outlet } from "react-router-dom";
 import { ClipboardList, IndianRupee, Send, Users } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
-import logo from "@/assets/geeta-traders-logo.png";
+import logo from "@/assets/logo-mark.png";
 
 const tabs = [
   { to: "/", hi: "रेट", en: "Rates", icon: IndianRupee },
@@ -17,12 +17,19 @@ const AppShell = () => {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <header className="sticky top-0 z-20 bg-card border-b pt-[env(safe-area-inset-top)]">
-        <div className="h-14 px-4 flex items-center gap-3 max-w-2xl mx-auto">
-          <img src={logo} alt="" className="h-8 w-8 rounded-lg" />
-          <h1 className="text-lg font-semibold flex-1">{t("गीता ट्रेडर्स", "Geeta Traders")}</h1>
+        <div className="h-16 px-4 flex items-center gap-3 max-w-2xl mx-auto">
+          <img src={logo} alt="" className="h-11 w-11 shrink-0" />
+          <div className="flex-1 min-w-0 leading-tight">
+            <h1 className="font-display text-[26px] leading-none text-[#3d6b2a] pt-1">
+              {t("गीता ट्रेडर्स", "Geeta Traders")}
+            </h1>
+            <p className="text-[13px] text-muted-foreground mt-1 tracking-wide">
+              {t("सरिया · सीमेंट · एंगल", "Sariya · Cement · Angle")}
+            </p>
+          </div>
           <button
             onClick={toggle}
-            className="min-h-11 px-3 rounded-full border text-sm font-medium active:bg-muted"
+            className="min-h-11 min-w-11 px-3 rounded-full bg-muted text-sm font-medium active:bg-border"
           >
             {t("EN", "हिं")}
           </button>

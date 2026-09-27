@@ -14,6 +14,7 @@ export default {
     },
     extend: {
       fontFamily: {
+        display: ["\"Tiro Devanagari Hindi\"", "serif"],
         sans: ["system-ui", "-apple-system", "BlinkMacSystemFont", "Segoe UI", "Roboto", "sans-serif"],
       },
       colors: {
