@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 import { Loader2, Minus, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -29,8 +29,8 @@ type Item = {
   price: number | null;
 };
 
-type PageData = { customer_name: string | null; shop_phone: string; items: Item[] };
-type Phase = "splash" | "loading" | "catalog" | "invalid" | "claimed" | "success";
+type PageData = { customer_name: string | null; customer_phone: string | null; shop_phone: string; items: Item[] };
+type Phase = "loading" | "catalog" | "invalid" | "claimed" | "success";
 
 const unitParen: Record<Item["unit"], string> = { bag: "प्रति बोरी", kg: "प्रति किलो", piece: "प्रति पीस" };
 
@@ -60,7 +60,7 @@ const downloadVCard = (phone: string) => {
 
 const OrderPage = () => {
   const { token } = useParams<{ token: string }>();
-  const [phase, setPhase] = useState<Phase>("splash");
+  const [phase, setPhase] = useState<Phase>("loading");
   const [data, setData] = useState<PageData | null>(null);
   const [cart, setCart] = useState<Record<string, number>>({});
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -70,23 +70,26 @@ const OrderPage = () => {
   const [placing, setPlacing] = useState(false);
   const [formError, setFormError] = useState("");
 
-  const loadRates = async () => {
-    setPhase("loading");
-    const { data: res, error } = await supabase.rpc("get_order_page", {
-      p_token: token,
-      p_device: deviceId(),
-    });
-    if (error) {
-      setPhase("invalid");
-      return;
-    }
-    const payload = res as PageData & { error?: string };
-    if (payload.error === "claimed") return setPhase("claimed");
-    if (payload.error === "invalid") return setPhase("invalid");
-    setData(payload);
-    setName(payload.customer_name ?? "");
-    setPhase("catalog");
-  };
+  // Fetched right on load, no tap-through. Safe: WhatsApp's link-preview
+  // fetch only reads static HTML/meta tags — it never runs this app's JS,
+  // so it can never trigger the device claim below.
+  useEffect(() => {
+    if (!token) return setPhase("invalid");
+    (async () => {
+      const { data: res, error } = await supabase.rpc("get_order_page", {
+        p_token: token,
+        p_device: deviceId(),
+      });
+      if (error) return setPhase("invalid");
+      const payload = res as PageData & { error?: string };
+      if (payload.error === "claimed") return setPhase("claimed");
+      if (payload.error === "invalid") return setPhase("invalid");
+      setData(payload);
+      setName(payload.customer_name ?? "");
+      setPhone(payload.customer_phone ?? "");
+      setPhase("catalog");
+    })();
+  }, [token]);
 
   const orderable = useMemo(() => (data?.items ?? []).filter((i) => i.price !== null), [data]);
   const grouped = useMemo(() => {
@@ -122,6 +125,7 @@ const OrderPage = () => {
     const items = lines.map((i) => ({
       variant_id: i.variant_id,
       label: variantLabel(i, i.category_hi),
+      unit: i.unit,
       qty: cart[i.variant_id],
       price: i.price,
     }));
@@ -193,15 +197,13 @@ const OrderPage = () => {
     );
   }
 
-  if (phase === "splash" || phase === "loading") {
+  if (phase === "loading") {
     return (
       <Centered>
         <img src={logo} alt="" className="h-20 w-20" />
         <h1 className="text-2xl font-display text-[#3d6b2a]">गीता ट्रेडर्स</h1>
         <p className="text-muted-foreground">आज का रेट · {hindiDate()}</p>
-        <Button className="h-14 px-8 text-[17px] mt-4" disabled={phase === "loading"} onClick={loadRates}>
-          {phase === "loading" ? <Loader2 className="h-5 w-5 animate-spin" /> : "आज का रेट देखें"}
-        </Button>
+        <Loader2 className="h-6 w-6 animate-spin text-primary mt-2" />
       </Centered>
     );
   }

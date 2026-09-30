@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/lib/supabase";
 import { useI18n } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
@@ -182,6 +183,81 @@ const AddVariant = ({ category, nextSort }: { category: Category; nextSort: numb
   );
 };
 
+// ---------------------------------------------------------------- add category
+
+const unitChoices: { value: Category["unit"]; hi: string; en: string }[] = [
+  { value: "kg", hi: "किलो में", en: "By kg" },
+  { value: "bag", hi: "बोरी में", en: "By bag" },
+  { value: "piece", hi: "पीस में", en: "By piece" },
+];
+
+const AddCategory = () => {
+  const { t, lang } = useI18n();
+  const qc = useQueryClient();
+  const [open, setOpen] = useState(false);
+  const [nameHi, setNameHi] = useState("");
+  const [nameEn, setNameEn] = useState("");
+  const [unit, setUnit] = useState<Category["unit"]>("kg");
+  const [busy, setBusy] = useState(false);
+
+  const save = async () => {
+    if (!nameHi.trim()) return;
+    setBusy(true);
+    const { error } = await supabase.from("categories").insert({
+      name_hi: nameHi.trim(),
+      name_en: nameEn.trim() || nameHi.trim(),
+      unit,
+      sort_order: 999,
+    });
+    setBusy(false);
+    if (error) {
+      toast.error(t("जोड़ नहीं पाए", "Could not add"), { description: error.message });
+      return;
+    }
+    setNameHi("");
+    setNameEn("");
+    setUnit("kg");
+    setOpen(false);
+    qc.invalidateQueries({ queryKey: ["catalog"] });
+    toast.success(t("नई कैटेगरी जुड़ गई", "New category added"));
+  };
+
+  if (!open) {
+    return (
+      <Button variant="outline" className="w-full h-12 text-primary border-dashed" onClick={() => setOpen(true)}>
+        <Plus className="h-4 w-4" /> {t("नई कैटेगरी जोड़ें", "Add new category")}
+      </Button>
+    );
+  }
+
+  return (
+    <div className="bg-card rounded-2xl border p-3 space-y-2">
+      <Input placeholder={t("नाम (हिंदी में)", "Name (Hindi)")} value={nameHi} onChange={(e) => setNameHi(e.target.value)} className="h-11" />
+      <Input placeholder={t("नाम (English, वैकल्पिक)", "Name (English, optional)")} value={nameEn} onChange={(e) => setNameEn(e.target.value)} className="h-11" />
+      <Select value={unit} onValueChange={(v) => setUnit(v as Category["unit"])}>
+        <SelectTrigger className="h-11">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          {unitChoices.map((u) => (
+            <SelectItem key={u.value} value={u.value}>
+              {lang === "hi" ? u.hi : u.en}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+      <div className="flex gap-2 pt-1">
+        <Button variant="ghost" className="flex-1 h-11" onClick={() => setOpen(false)}>
+          {t("रद्द करें", "Cancel")}
+        </Button>
+        <Button className="flex-1 h-11" disabled={busy || !nameHi.trim()} onClick={save}>
+          {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : t("जोड़ें", "Add")}
+        </Button>
+      </div>
+    </div>
+  );
+};
+
 // ---------------------------------------------------------------- category card
 
 const CategoryCard = ({
@@ -333,6 +409,8 @@ const Rates = () => {
           defaultOpen={i === 0}
         />
       ))}
+
+      <AddCategory />
 
       {inactive.length > 0 && (
         <div className="pt-4">

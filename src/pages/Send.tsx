@@ -68,9 +68,9 @@ const Send = () => {
   const broadcastMessage = useMemo(() => {
     if (!catalog.data || !settings.data) return "";
     return buildRateMessage({
-      greeting: "प्रिय ग्राहक, नमस्ते 🙏",
+      greeting: "प्रिय ग्राहक, नमस्ते",
       link: orderLink("public"),
-      closingLine: settings.data.closing_line || "आपका दिन शुभ हो 🙏",
+      closingLine: settings.data.closing_line || "आपका दिन शुभ हो",
       categories: catalog.data.categories,
       variants: catalog.data.variants,
     });
@@ -132,9 +132,9 @@ const Send = () => {
     if (!catalog.data || !settings.data) return;
 
     const message = buildRateMessage({
-      greeting: `${customer.name ?? "ग्राहक"} जी, नमस्ते 🙏`,
+      greeting: `${customer.name ?? "ग्राहक"} जी, नमस्ते`,
       link: orderLink(customer.link_token),
-      closingLine: settings.data.closing_line || "आपका दिन शुभ हो 🙏",
+      closingLine: settings.data.closing_line || "आपका दिन शुभ हो",
       categories: catalog.data.categories,
       variants: catalog.data.variants,
     });

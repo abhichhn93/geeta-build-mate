@@ -29,7 +29,12 @@ export function buildRateMessage(args: {
   variants: Variant[];
 }) {
   const { greeting, link, closingLine, categories, variants } = args;
-  const lines: string[] = [greeting, "", "*गीता ट्रेडर्स* — आज का रेट", `📅 ${hindiDate()}`, "━━━━━━━━━━━━━━"];
+  // Plain dashes, not ━. And no 📅/👇 — both are 4-byte "surrogate pair"
+  // emoji that Golu's Android phone has no font glyph for, so they showed
+  // as a broken ◆? symbol. ↓ is an older, single-code-point arrow every
+  // phone can render; greetings elsewhere lost their 🙏 for the same reason.
+  const divider = "--------------------";
+  const lines: string[] = [greeting, "", "*गीता ट्रेडर्स* — आज का रेट", hindiDate(), divider];
 
   for (const c of categories) {
     if (!c.is_active) continue;
@@ -41,7 +46,7 @@ export function buildRateMessage(args: {
     for (const v of items) lines.push(`• ${variantLabel(v, c.name_hi)} — ₹${v.price}`);
   }
 
-  lines.push("", "━━━━━━━━━━━━━━", "ऑर्डर करें 👇", link, "", closingLine);
+  lines.push("", divider, "ऑर्डर करें ↓", link, "", closingLine);
   return lines.join("\n");
 }
 
