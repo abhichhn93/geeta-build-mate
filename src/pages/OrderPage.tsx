@@ -249,7 +249,21 @@ const OrderPage = () => {
                       >
                         <Minus className="h-4 w-4" />
                       </button>
-                      <span className="w-7 text-center text-[16px] font-medium">{cart[item.variant_id] ?? 0}</span>
+                      {/* Typeable, not just tappable — a 200-unit order shouldn't need 200 taps */}
+                      <input
+                        type="text"
+                        inputMode="decimal"
+                        value={cart[item.variant_id] ?? ""}
+                        placeholder="0"
+                        onFocus={(e) => e.target.select()}
+                        onChange={(e) => {
+                          const raw = e.target.value.replace(/[^\d.]/g, "");
+                          if (raw === "") return setQty(item.variant_id, 0);
+                          const n = Number(raw);
+                          if (!Number.isNaN(n)) setQty(item.variant_id, Math.min(9999, n));
+                        }}
+                        className="w-12 h-9 text-center text-[16px] font-medium rounded-lg border bg-background"
+                      />
                       <button
                         className="h-9 w-9 rounded-full bg-primary text-primary-foreground flex items-center justify-center active:opacity-80"
                         onClick={() => setQty(item.variant_id, (cart[item.variant_id] ?? 0) + 1)}
