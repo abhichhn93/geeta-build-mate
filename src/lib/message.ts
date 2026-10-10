@@ -27,8 +27,10 @@ export function buildRateMessage(args: {
   closingLine: string;
   categories: Category[];
   variants: Variant[];
+  /** VIP customer's personal message: use price_vip where it's set, general price otherwise. */
+  vip?: boolean;
 }) {
-  const { greeting, link, closingLine, categories, variants } = args;
+  const { greeting, link, closingLine, categories, variants, vip } = args;
   // Plain dashes, not ━. And no 📅/👇 — both are 4-byte "surrogate pair"
   // emoji that Golu's Android phone has no font glyph for, so they showed
   // as a broken ◆? symbol. ↓ is an older, single-code-point arrow every
@@ -43,7 +45,10 @@ export function buildRateMessage(args: {
     );
     if (items.length === 0) continue;
     lines.push("", `*${c.name_hi}* (${unitParen[c.unit]})`);
-    for (const v of items) lines.push(`• ${variantLabel(v, c.name_hi)} — ₹${v.price}`);
+    for (const v of items) {
+      const price = vip ? v.price_vip ?? v.price : v.price;
+      lines.push(`• ${variantLabel(v, c.name_hi)} — ₹${price}`);
+    }
   }
 
   lines.push("", divider, "ऑर्डर करें ↓", link, "", closingLine);

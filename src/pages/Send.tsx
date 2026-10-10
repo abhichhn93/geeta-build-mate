@@ -68,7 +68,7 @@ const Send = () => {
   const broadcastMessage = useMemo(() => {
     if (!catalog.data || !settings.data) return "";
     return buildRateMessage({
-      greeting: "प्रिय ग्राहक, नमस्ते",
+      greeting: "प्रिय पार्टनर, नमस्ते",
       link: orderLink("public"),
       closingLine: settings.data.closing_line || "आपका दिन शुभ हो",
       categories: catalog.data.categories,
@@ -137,6 +137,7 @@ const Send = () => {
       closingLine: settings.data.closing_line || "आपका दिन शुभ हो",
       categories: catalog.data.categories,
       variants: catalog.data.variants,
+      vip: true, // this queue only ever lists VIP customers
     });
     window.open(waLink(customer.phone, message), "_blank");
 

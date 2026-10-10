@@ -42,6 +42,8 @@ const RateRow = ({ variant, fallbackLabel }: { variant: Variant; fallbackLabel: 
   const qc = useQueryClient();
   const [value, setValue] = useState(variant.price?.toString() ?? "");
   const [state, setState] = useState<SaveState>("idle");
+  const [vipValue, setVipValue] = useState(variant.price_vip?.toString() ?? "");
+  const [vipState, setVipState] = useState<SaveState>("idle");
 
   const save = async () => {
     const trimmed = value.trim();
@@ -69,6 +71,39 @@ const RateRow = ({ variant, fallbackLabel }: { variant: Variant; fallbackLabel: 
     setTimeout(() => setState((s) => (s === "saved" ? "idle" : s)), 2000);
   };
 
+  // VIP price is a discount off the general price, so today's row needs both
+  // columns written together — carry the general price forward if it hasn't
+  // been touched today, same rule the general save already follows.
+  const saveVip = async () => {
+    const trimmed = vipValue.trim();
+    if (trimmed === "" && variant.price_vip === null) return;
+    const priceVip = trimmed === "" ? null : Number(trimmed);
+    if (priceVip !== null && (!Number.isFinite(priceVip) || priceVip <= 0)) {
+      toast.error(t("सही VIP रेट डालें", "Enter a valid VIP rate"));
+      setVipValue(variant.price_vip?.toString() ?? "");
+      return;
+    }
+    if (priceVip === variant.price_vip || variant.price === null) return;
+
+    setVipState("saving");
+    const today = todayISO();
+    const { error } = await supabase.from("rates").upsert({
+      variant_id: variant.id,
+      rate_date: today,
+      price: variant.price,
+      price_vip: priceVip,
+      updated_at: new Date().toISOString(),
+    });
+    if (error) {
+      setVipState("error");
+      toast.error(t("VIP रेट सेव नहीं हुआ", "VIP rate not saved"), { description: error.message });
+      return;
+    }
+    patch(variant.id, { price_vip: priceVip, rate_date: today });
+    setVipState("saved");
+    setTimeout(() => setVipState((s) => (s === "saved" ? "idle" : s)), 2000);
+  };
+
   const toggleAvailable = async (available: boolean) => {
     patch(variant.id, { is_available: available });
     const { error } = await supabase.from("variants").update({ is_available: available }).eq("id", variant.id);
@@ -87,50 +122,86 @@ const RateRow = ({ variant, fallbackLabel }: { variant: Variant; fallbackLabel: 
   };
 
   return (
-    <div className={cn("flex items-center gap-2 py-2", !variant.is_available && "opacity-60")}>
-      <div className="flex-1 min-w-0">
-        <p className="text-[16px] font-medium truncate">{variantLabel(variant, fallbackLabel)}</p>
-        {!variant.is_available && <p className="text-[13px] text-destructive">{t("स्टॉक ख़त्म", "Out of stock")}</p>}
-      </div>
+    <div className={cn("py-2", !variant.is_available && "opacity-60")}>
+      <div className="flex items-center gap-2">
+        <div className="flex-1 min-w-0">
+          <p className="text-[16px] font-medium truncate">{variantLabel(variant, fallbackLabel)}</p>
+          {!variant.is_available && <p className="text-[13px] text-destructive">{t("स्टॉक ख़त्म", "Out of stock")}</p>}
+        </div>
 
-      <div className="relative w-28 shrink-0">
-        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">₹</span>
-        <Input
-          type="text"
-          inputMode="decimal"
-          value={value}
-          placeholder="—"
-          onChange={(e) => {
-            setValue(e.target.value.replace(/[^\d.]/g, ""));
-            if (state === "error") setState("idle");
-          }}
-          onBlur={save}
-          onKeyDown={(e) => e.key === "Enter" && e.currentTarget.blur()}
-          className={cn(
-            "h-11 pl-7 pr-7 text-[17px] font-semibold text-right",
-            state === "error" && "border-destructive",
-          )}
+        <div className="relative w-28 shrink-0">
+          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">₹</span>
+          <Input
+            type="text"
+            inputMode="decimal"
+            value={value}
+            placeholder="—"
+            onChange={(e) => {
+              setValue(e.target.value.replace(/[^\d.]/g, ""));
+              if (state === "error") setState("idle");
+            }}
+            onBlur={save}
+            onKeyDown={(e) => e.key === "Enter" && e.currentTarget.blur()}
+            className={cn(
+              "h-11 pl-7 pr-7 text-[17px] font-semibold text-right",
+              state === "error" && "border-destructive",
+            )}
+          />
+          <span className="absolute right-2 top-1/2 -translate-y-1/2">
+            {state === "saving" && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
+            {state === "saved" && <Check className="h-4 w-4 text-success" />}
+            {state === "error" && (
+              <button onClick={save} aria-label={t("दोबारा", "Retry")}>
+                <RotateCw className="h-4 w-4 text-destructive" />
+              </button>
+            )}
+          </span>
+        </div>
+
+        <Switch
+          checked={variant.is_available}
+          onCheckedChange={toggleAvailable}
+          aria-label={t("स्टॉक में", "In stock")}
         />
-        <span className="absolute right-2 top-1/2 -translate-y-1/2">
-          {state === "saving" && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
-          {state === "saved" && <Check className="h-4 w-4 text-success" />}
-          {state === "error" && (
-            <button onClick={save} aria-label={t("दोबारा", "Retry")}>
-              <RotateCw className="h-4 w-4 text-destructive" />
-            </button>
-          )}
-        </span>
+
+        <button onClick={remove} className="h-11 w-8 flex items-center justify-center text-muted-foreground/60">
+          <Trash2 className="h-4 w-4" />
+        </button>
       </div>
 
-      <Switch
-        checked={variant.is_available}
-        onCheckedChange={toggleAvailable}
-        aria-label={t("स्टॉक में", "In stock")}
-      />
-
-      <button onClick={remove} className="h-11 w-8 flex items-center justify-center text-muted-foreground/60">
-        <Trash2 className="h-4 w-4" />
-      </button>
+      {/* VIP price — visually secondary, optional. Disabled until a general price exists. */}
+      <div className="flex items-center justify-end gap-2 pt-1 pr-[calc(2rem+0.5rem)]">
+        <span className="text-[13px] text-muted-foreground">{t("VIP रेट", "VIP rate")}</span>
+        <div className="relative w-24 shrink-0">
+          <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[13px] text-muted-foreground">₹</span>
+          <Input
+            type="text"
+            inputMode="decimal"
+            disabled={variant.price === null}
+            value={vipValue}
+            placeholder={t("सामान्य जैसा", "same as general")}
+            onChange={(e) => {
+              setVipValue(e.target.value.replace(/[^\d.]/g, ""));
+              if (vipState === "error") setVipState("idle");
+            }}
+            onBlur={saveVip}
+            onKeyDown={(e) => e.key === "Enter" && e.currentTarget.blur()}
+            className={cn(
+              "h-9 pl-6 pr-6 text-[14px] text-right border-dashed",
+              vipState === "error" && "border-destructive",
+            )}
+          />
+          <span className="absolute right-1.5 top-1/2 -translate-y-1/2">
+            {vipState === "saving" && <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />}
+            {vipState === "saved" && <Check className="h-3.5 w-3.5 text-success" />}
+            {vipState === "error" && (
+              <button onClick={saveVip} aria-label={t("दोबारा", "Retry")}>
+                <RotateCw className="h-3.5 w-3.5 text-destructive" />
+              </button>
+            )}
+          </span>
+        </div>
+      </div>
     </div>
   );
 };
@@ -274,11 +345,41 @@ const CategoryCard = ({
   const patch = usePatchVariant();
   const [open, setOpen] = useState(defaultOpen);
   const [confirming, setConfirming] = useState(false);
+  const [vipDiscountOpen, setVipDiscountOpen] = useState(false);
+  const [vipDiscount, setVipDiscount] = useState("");
+  const [applyingVip, setApplyingVip] = useState(false);
 
   const today = todayISO();
   const updatedToday = variants.some((v) => v.rate_date === today);
   const name = lang === "hi" ? category.name_hi : category.name_en;
   const stale = variants.filter((v) => v.price !== null && v.rate_date !== today);
+  const priced = variants.filter((v) => v.price !== null);
+
+  /** "VIP = सामान्य − ₹___" for the whole category in one write. */
+  const applyVipDiscount = async () => {
+    const discount = Number(vipDiscount);
+    if (!vipDiscount.trim() || !Number.isFinite(discount) || discount < 0) {
+      toast.error(t("सही छूट डालें", "Enter a valid discount"));
+      return;
+    }
+    setApplyingVip(true);
+    const rows = priced.map((v) => ({
+      variant_id: v.id,
+      rate_date: today,
+      price: v.price,
+      price_vip: Math.max(0, v.price! - discount),
+    }));
+    const { error } = await supabase.from("rates").upsert(rows);
+    setApplyingVip(false);
+    if (error) {
+      toast.error(t("सेव नहीं हुआ", "Not saved"), { description: error.message });
+      return;
+    }
+    priced.forEach((v) => patch(v.id, { price_vip: Math.max(0, v.price! - discount), rate_date: today }));
+    setVipDiscount("");
+    setVipDiscountOpen(false);
+    toast.success(t(`${name} — VIP रेट सेट हो गया`, `${name} — VIP rate set`));
+  };
 
   /** "Nothing moved today" — carry every price forward as today's row in one write. */
   const confirmAll = async () => {
@@ -339,6 +440,32 @@ const CategoryCard = ({
               {t("बाकी सब रेट वही हैं", "Other rates unchanged")}
             </Button>
           )}
+
+          {priced.length > 0 &&
+            (vipDiscountOpen ? (
+              <div className="flex items-center gap-2 mt-2">
+                <span className="text-[14px] text-muted-foreground whitespace-nowrap">VIP = {t("सामान्य", "general")} −</span>
+                <div className="relative flex-1">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">₹</span>
+                  <Input
+                    type="text"
+                    inputMode="decimal"
+                    autoFocus
+                    value={vipDiscount}
+                    onChange={(e) => setVipDiscount(e.target.value.replace(/[^\d.]/g, ""))}
+                    onKeyDown={(e) => e.key === "Enter" && applyVipDiscount()}
+                    className="h-11 pl-7"
+                  />
+                </div>
+                <Button className="h-11" disabled={applyingVip} onClick={applyVipDiscount}>
+                  {applyingVip ? <Loader2 className="h-4 w-4 animate-spin" /> : t("लागू करें", "Apply")}
+                </Button>
+              </div>
+            ) : (
+              <Button variant="outline" className="w-full h-11 mt-2" onClick={() => setVipDiscountOpen(true)}>
+                {t("VIP = सामान्य − ₹___", "VIP = general − ₹___")}
+              </Button>
+            ))}
 
           <div className="flex items-center justify-between pt-1">
             <AddVariant category={category} nextSort={Math.max(0, ...variants.map((v) => v.sort_order)) + 1} />

@@ -63,6 +63,9 @@ const OrderPage = () => {
   const [phase, setPhase] = useState<Phase>("loading");
   const [data, setData] = useState<PageData | null>(null);
   const [cart, setCart] = useState<Record<string, number>>({});
+  // Raw typed text, kept alongside the parsed number. A number can't hold "154."
+  // mid-typing, so binding the input to one erases the decimal point as it's typed.
+  const [qtyText, setQtyText] = useState<Record<string, string>>({});
   const [sheetOpen, setSheetOpen] = useState(false);
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
@@ -101,13 +104,37 @@ const OrderPage = () => {
     return [...map.entries()];
   }, [orderable]);
 
-  const setQty = (id: string, qty: number) =>
+  const setQty = (id: string, qty: number) => {
+    const n = Math.min(9999, Math.max(0, qty));
     setCart((prev) => {
       const next = { ...prev };
-      if (qty <= 0) delete next[id];
-      else next[id] = qty;
+      if (n <= 0) delete next[id];
+      else next[id] = n;
       return next;
     });
+    setQtyText((prev) => {
+      const next = { ...prev };
+      if (n <= 0) delete next[id];
+      else next[id] = String(n);
+      return next;
+    });
+  };
+
+  // Steel is sold by weight — 154 kg 300 g has to be typeable as 154.3
+  const setQtyFromText = (id: string, raw: string) => {
+    let text = raw.replace(/[^\d.]/g, "");
+    const [whole, ...rest] = text.split(".");
+    if (rest.length) text = `${whole}.${rest.join("").slice(0, 3)}`; // one dot, 3 decimals
+    const n = text === "" || text === "." ? 0 : Number(text);
+    if (Number.isNaN(n) || n > 9999) return;
+    setQtyText((prev) => ({ ...prev, [id]: text }));
+    setCart((prev) => {
+      const next = { ...prev };
+      if (n <= 0) delete next[id];
+      else next[id] = n;
+      return next;
+    });
+  };
 
   const lines = orderable.filter((i) => cart[i.variant_id] > 0);
   const total = lines.reduce((sum, i) => sum + i.price! * cart[i.variant_id], 0);
@@ -253,16 +280,11 @@ const OrderPage = () => {
                       <input
                         type="text"
                         inputMode="decimal"
-                        value={cart[item.variant_id] ?? ""}
+                        value={qtyText[item.variant_id] ?? ""}
                         placeholder="0"
                         onFocus={(e) => e.target.select()}
-                        onChange={(e) => {
-                          const raw = e.target.value.replace(/[^\d.]/g, "");
-                          if (raw === "") return setQty(item.variant_id, 0);
-                          const n = Number(raw);
-                          if (!Number.isNaN(n)) setQty(item.variant_id, Math.min(9999, n));
-                        }}
-                        className="w-12 h-9 text-center text-[16px] font-medium rounded-lg border bg-background"
+                        onChange={(e) => setQtyFromText(item.variant_id, e.target.value)}
+                        className="w-16 h-9 text-center text-[16px] font-medium rounded-lg border bg-background"
                       />
                       <button
                         className="h-9 w-9 rounded-full bg-primary text-primary-foreground flex items-center justify-center active:opacity-80"

@@ -22,6 +22,8 @@ export type Variant = {
   is_active: boolean;
   /** Latest price on any date — carries forward until changed. */
   price: number | null;
+  /** VIP price. Null means "same as general" — not every item needs its own VIP rate. */
+  price_vip: number | null;
   rate_date: string | null;
 };
 
@@ -58,7 +60,7 @@ export async function fetchCatalog() {
   const [cats, vars, rates] = await Promise.all([
     supabase.from("categories").select("*").order("sort_order"),
     supabase.from("variants").select("*").eq("is_active", true).order("sort_order"),
-    supabase.from("latest_rates").select("variant_id, rate_date, price"),
+    supabase.from("latest_rates").select("variant_id, rate_date, price, price_vip"),
   ]);
   const error = cats.error ?? vars.error ?? rates.error;
   if (error) throw error;
@@ -67,6 +69,7 @@ export async function fetchCatalog() {
   const variants: Variant[] = vars.data.map((v) => ({
     ...v,
     price: latest.get(v.id)?.price ?? null,
+    price_vip: latest.get(v.id)?.price_vip ?? null,
     rate_date: latest.get(v.id)?.rate_date ?? null,
   }));
 

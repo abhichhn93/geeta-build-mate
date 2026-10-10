@@ -466,3 +466,179 @@ white cards on `0 0% 97%` background, soft rounded corners, generous spacing.
 The rule that keeps this alive: **any feature requested after launch waits 30 days.** If it
 is still wanted after 30 days of real use, build it. Version 1 of this app died from
 accumulating features nobody had asked for twice.
+
+---
+
+# v2.1 — changes after Golu's first days of real use
+
+Shipped, deployed, and used by Golu for two days. Everything below comes from his own
+feedback. **These are additive changes to a working system. Do not redesign anything, do
+not drop any table, do not reset any data.** Categories, customers, rates and order history
+must all survive untouched — he asked about this directly and it is the thing he is most
+nervous about.
+
+Work in two passes: ship 9.1 the same day (he is blocked), then 9.2 as one batch.
+
+## 9.1 Blockers — ship first
+
+### Decimal quantities (the main complaint)
+
+He cannot type `154.3` kg. [`src/pages/OrderPage.tsx:253-266`](src/pages/OrderPage.tsx#L253-L266)
+— the input is `inputMode="decimal"` and the regex keeps the dot, but cart state holds a
+**number**, so `"154."` → `Number("154.")` → `154` → re-renders as `"154"` and the decimal
+point is erased as he types it.
+
+Fix: hold the raw typed string in state (`Record<string, string>`), parse to a number only
+on submit and for the running total. Keep the `+`/`−` buttons working on the parsed value.
+
+Migration, additive:
+
+```sql
+alter table order_items
+  alter column ordered_qty   type numeric(10,3),
+  alter column fulfilled_qty type numeric(10,3);
+```
+
+`numeric(10,2)` would round 154 kg 325 g to 154.33. Steel is sold by weight; give it grams.
+
+### Greeting: "Dear Partner"
+
+In `src/lib/message.ts`, the broadcast greeting changes from प्रिय ग्राहक to:
+
+- Hindi: **प्रिय पार्टनर**
+- English: **Dear Partner**
+
+Use पार्टनर, the transliteration — *not* साथी. साथी reads as "companion/comrade", wrong
+register for a business relationship. Golu was explicit about this.
+
+The named VIP greeting (`{नाम} जी, नमस्ते`) is unchanged.
+
+## 9.2 Features — one batch after the blockers
+
+### Two rate tiers, one flag
+
+Golu decided this himself: **VIP means both a better price and the named message.** Same
+people, one flag. Do not split it into two flags.
+
+- `customers.tier` already exists (`'vip' | 'regular'`) — reuse it as-is
+- Add `rates.price_vip numeric(10,2)` **nullable**. Null means "same as general."
+
+Nullable matters: he sets ~40 prices each morning. Forcing a second number for every item
+doubles that to 80 and is exactly the friction that killed v1. He fills in a VIP price only
+where it differs.
+
+On the रेट screen, the VIP price is a second, visually secondary input per row. Add a
+per-category shortcut — **"VIP = सामान्य − ₹___"** — that fills the whole category at once.
+
+`get_order_page` must return the VIP price when the token belongs to a VIP customer, and
+the general price otherwise. The `public` broadcast link always returns general pricing.
+
+### Delivery channel — separate from tier
+
+Some customers have feature phones and cannot receive WhatsApp. That is about the handset,
+not the price, so it is an independent column:
+
+```sql
+alter table customers add column channel text not null default 'whatsapp'
+  check (channel in ('whatsapp','sms'));
+```
+
+| Tier | Channel | Price | Greeting | How it is sent |
+|---|---|---|---|---|
+| vip | whatsapp | VIP | by name | tap-send queue, `wa.me` |
+| regular | whatsapp | general | प्रिय पार्टनर | one copy button → broadcast list |
+| either | sms | per tier | by name if known | tap-send queue, `sms:` link |
+
+### SMS sending — `sms:` links, not a gateway
+
+**No DLT registration, no gateway, no monthly fee.** `sms:` deep links open the phone's own
+Messages app with text pre-filled, on both iOS and Android — the identical pattern to
+`wa.me`. It sends from Golu's own number and uses his plan's SMS allowance.
+
+Reuse the existing VIP tap-send queue component for an SMS queue.
+
+Two things that will bite:
+
+- **Hindi costs 70 characters per SMS segment**, not 160, because Devanagari forces Unicode.
+  A full Hindi rate card would split into ten-plus segments per person. So SMS gets its own
+  **short Hinglish** message — roughly 160 characters, one segment:
+
+  ```
+  Geeta Traders 5 Oct
+  Sariya: Tata 8mm-68 10mm-69 12mm-70
+  Cement ACC-340
+  Order: 9xxxxxxxxx
+  ```
+
+- **It must contain the actual rates, not a link.** A feature-phone user cannot open a link
+  — that is the entire reason they are in this group. Include the shop phone number so they
+  can call to order.
+
+- iOS has historically wanted `sms:<number>&body=<text>` while Android uses `?body=`.
+  Detect the platform and emit the right separator, or SMS will open empty on one of them.
+
+### Order notification with sound
+
+Web Push via a Supabase Edge Function with VAPID keys. Free.
+
+**Prerequisite to confirm before building:** on iPhone, Web Push only works if the app has
+been **added to the home screen**. If Golu is just opening it in Safari, no notification
+will ever arrive. Check with him first.
+
+The alert uses the system notification sound; a custom bell can only play while the app is
+open in the foreground. Do not promise a custom sound.
+
+### Customer details and notes
+
+He wants to recall who someone is, not run a CRM. `name`, `shop_name` and `address` already
+exist. Add:
+
+```sql
+alter table customers
+  add column customer_type text,   -- free text: "शॉप", "ठेकेदार", "कंपनी"
+  add column notes text;
+```
+
+Notes is a plain textarea on the customer sheet, e.g. "आज ₹10,000 दिए". **No ledger, no
+balance tracking, no accounting** — he has a separate system for money and said so twice.
+
+### vCard import
+
+The Contact Picker API is Chrome-on-Android only; iOS Safari does not expose contacts at
+all, so Golu cannot pick contacts on his iPhone. The workaround that does work:
+
+iCloud.com → Contacts → select all → **Export vCard** → one `.vcf` file → upload to the app
+→ parse and bulk-create customers with names and numbers.
+
+One-time catch-up only; the app already creates customers automatically from orders.
+Dedupe against `customer_phones.phone` on import.
+
+### Approximate total
+
+On the order page and the order confirmation, label weight-based totals as **अनुमानित राशि**
+(approximate) with a one-line note that the final amount is confirmed after weighing.
+Bag and piece items are exact. Wording change only.
+
+## Already done — do not rebuild
+
+The order comment box exists and works: [`OrderPage.tsx:310`](src/pages/OrderPage.tsx#L310)
+renders the textarea, it saves to `orders.note`, and it is already included in the WhatsApp
+order summary. Golu asked for it without realising he already had it. Confirm with him
+rather than building a second one.
+
+## Not in this batch
+
+- **Voice message with orders.** Genuinely possible and free — Supabase Storage's 1 GB holds
+  roughly 10,000 clips — but it is recording UI plus upload plus playback, about half a day.
+  Wait until the rest is solid and he asks a second time.
+- **Contact Picker API.** Impossible on iOS. vCard import replaces it.
+- **Bulk SMS gateway / DLT registration.** Only needed for automated sending at volume. The
+  `sms:` link approach covers this use case at zero cost and zero paperwork.
+- **Stock or inventory tracking.** He ruled it out again, unprompted, in this round.
+
+## One UI instruction
+
+**The broadcast is not a category and must not look like one.** Golu was clear: it is just a
+message he copies. Keep it as a single copy button on the भेजें screen. Do not give it a
+section header, a count, a settings page, or any sense of being a managed entity. The only
+managed list is VIP.
